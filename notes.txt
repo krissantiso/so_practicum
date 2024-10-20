@@ -1,0 +1,7 @@
+open [no args] - doesnt work
+open [args] - seg fault  (it creates the file tho)
+fInitializeList(&ofList) - seg fault
+historic - ugly enters
+historic -N - not working
+close a - infinite loop
+dup - cannot try until open works (probably seg fault)
