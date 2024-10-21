@@ -1,3 +1,6 @@
 close a - infinite loop
 
 When printing the open files it says O_APPEND to the standard input
+date doesnt work xd - added 1 to all month calls so it works (ask if it starts at 0)
+
+change help for listfile

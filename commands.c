@@ -15,6 +15,8 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
 
 void Cmd_authors (char *pcs[]){
     if ( pcs[0] == NULL ) {
@@ -58,9 +60,9 @@ void Cmd_date (char *pcs[]) {
     struct tm * time = localtime(&t);
 
     if (pcs[0]==NULL) {
-        printf("%.2d %.2d %.2d\n%.2d:%.2d:%.2d\n", time->tm_mday, time->tm_mon, time->tm_year + 1900, time->tm_hour, time->tm_min, time->tm_sec);
+        printf("%.2d %.2d %.2d\n%.2d:%.2d:%.2d\n", time->tm_mday, time->tm_mon+1, time->tm_year + 1900, time->tm_hour, time->tm_min, time->tm_sec);
     } else if ( strcmp( pcs[0], "-d") == 0 ) {
-        printf("%.2d %.2d %.4d\n", time->tm_mday, time->tm_mon, time->tm_year + 1900);
+        printf("%.2d %.2d %.4d\n", time->tm_mday, time->tm_mon+1, time->tm_year + 1900);
     } else if ( strcmp( pcs[0], "-t") == 0 ) {
         printf("%.2d:%.2d:%.2d\n", time->tm_hour, time->tm_min, time->tm_sec);
     } else {
@@ -543,7 +545,100 @@ void Cmd_makedir (char *pcs[]){
     printf("%s was created\n", pcs[0]);
 }
 
+void printFile (int isLong, int isLink, int isAcc, struct stat stats, char *pcs[]) {
+	if (isLong == 1) {
+        //date
+        struct tm dt = *(localtime(&stats.st_ctime));
+    	printf("%d/%.2d/%.2d - %.2d:%.2d\t", dt.tm_year + 1900, dt.tm_mon+1, dt.tm_mday, dt.tm_hour, dt.tm_min);
+        //hardlink
+		printf("%ld\t", stats.st_nlink);
+        //inode
+		printf("(%ld)\t", stats.st_ino);
+        //creator of file (user)
+        printf("%s\t", getpwuid(stats.st_uid)->pw_name);
+        //creator of file (group)
+		printf("%s\t", getgrgid(stats.st_gid)->gr_name);
+        //permisions in rwx format
+		printf((S_ISDIR(stats.st_mode)) ? "d" : "-");
+        printf((stats.st_mode & S_IRUSR) ? "r" : "-");
+        printf((stats.st_mode & S_IWUSR) ? "w" : "-");
+        printf((stats.st_mode & S_IXUSR) ? "x" : "-");
+        printf((stats.st_mode & S_IRGRP) ? "r" : "-");
+        printf((stats.st_mode & S_IWGRP) ? "w" : "-");
+        printf((stats.st_mode & S_IXGRP) ? "x" : "-");
+        printf((stats.st_mode & S_IROTH) ? "r" : "-");
+        printf((stats.st_mode & S_IWOTH) ? "w" : "-");
+        printf((stats.st_mode & S_IXOTH) ? "x\t" : "-\t");
+        //file size
+        printf("%ld\t",stats.st_size);
+        //last access time
+        if (isAcc == 1) {
+			struct tm at = *(localtime(&stats.st_atime));
+    		printf("%d/%.2d/%.2d - %.2d:%.2d\t", at.tm_year + 1900, at.tm_mon+1, at.tm_mday, at.tm_hour, at.tm_min);
+		}
+        //file name
+        printf("%s\t", pcs[0]);
+        //path
+        if (isLink == 1) {
+			if ( (stats.st_mode & S_IFMT) == S_IFLNK) {
+        		printf(" -> %s", realpath(pcs[0], NULL));
+			}
+        }
+        printf("\n");
+        return;
+	}
+    if (isAcc == 1) {
+    	//file size
+    	printf("%ld\t",stats.st_size);
+        //access time
+        struct tm at = *(localtime(&stats.st_atime));
+    	printf("%d/%.2d/%.2d - %.2d:%.2d\t", at.tm_year + 1900, at.tm_mon+1, at.tm_mday, at.tm_hour, at.tm_min);
+    	//file name
+    	printf("%s", pcs[0]);
+        if (isLink == 1) {
+    		if ((stats.st_mode & S_IFMT) == S_IFLNK) {
+        		printf(" -> %s", realpath(pcs[0], NULL));
+			}
+		}
+        printf("\n");
+    	return;
+	}
+
+    //file size
+    printf("%ld\t",stats.st_size);
+    //file name
+    printf("%s", pcs[0]);
+    if (isLink == 1) {
+		if ((stats.st_mode & S_IFMT) == S_IFLNK) {
+        	printf(" -> %s", realpath(pcs[0], NULL));
+		}
+	}
+    printf("\n");
+}
+
 void Cmd_listfile (char *pcs[]){
+	if (pcs[0]==NULL) {
+        printf("The name of the directory needs to be provided\n");
+        return;
+    }
+    int isLong=0, isLink=0, isAcc=0, i;
+
+    for ( i = 0; pcs[i] != NULL; i++) {
+    	if (strcmp(pcs[i], "-long") == 0) isLong = 1;
+        else if (strcmp(pcs[i], "-link") == 0) isLink = 1;
+        else if (strcmp(pcs[i], "-acc") == 0) isAcc = 1;
+        else break; //i is the name location
+    }
+
+    for (i = i; pcs[i] != NULL; i++) {
+    	struct stat stats;
+    	if ( lstat(pcs[i], &stats) == 0) {
+			printFile(isLong, isLink, isAcc, stats, &pcs[i]);
+   		} else {
+            printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+   		}
+    }
+
 
 }
 
@@ -572,7 +667,6 @@ void print_file_info(const char *path, const struct stat *file_stat, int islong,
             time_info = localtime(&file_stat->st_atime);
         else
             time_info = localtime(&file_stat->st_mtime);
-
         char time_str[256];
         strftime(time_str, sizeof(time_str), "%b %d %H:%M", time_info);
         printf("%s ", time_str);
