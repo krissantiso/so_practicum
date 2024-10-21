@@ -383,11 +383,175 @@ void Cmd_makedir (char *pcs[]){
 void Cmd_listfile (char *pcs[]){
 
 }
-void Cmd_listdir (char *pcs[]){
 
+
+//THIS IS AN AUXILIARY FUNCTION TO PRINT INFORMATION ABOUT FILES
+void print_file_info(const char *path, const struct stat *file_stat, int islong, int isacc, int islink) {
+    // if -long flag is set, print detailed information
+    if (islong) {
+        printf((S_ISDIR(file_stat->st_mode)) ? "d" : "-");
+        printf((file_stat->st_mode & S_IRUSR) ? "r" : "-");
+        printf((file_stat->st_mode & S_IWUSR) ? "w" : "-");
+        printf((file_stat->st_mode & S_IXUSR) ? "x" : "-");
+        printf((file_stat->st_mode & S_IRGRP) ? "r" : "-");
+        printf((file_stat->st_mode & S_IWGRP) ? "w" : "-");
+        printf((file_stat->st_mode & S_IXGRP) ? "x" : "-");
+        printf((file_stat->st_mode & S_IROTH) ? "r" : "-");
+        printf((file_stat->st_mode & S_IWOTH) ? "w" : "-");
+        printf((file_stat->st_mode & S_IXOTH) ? "x " : "- ");
+
+        // display size
+        printf("%ld ", file_stat->st_size);
+
+        // display time, either access time (-acc) or modification time (default)
+        struct tm *time_info;
+        if (isacc)
+            time_info = localtime(&file_stat->st_atime);
+        else
+            time_info = localtime(&file_stat->st_mtime);
+
+        char time_str[256];
+        strftime(time_str, sizeof(time_str), "%b %d %H:%M", time_info);
+        printf("%s ", time_str);
+    }
+
+    // Print the file or directory name
+    printf("%s", path);
+
+    // If -link flag is set and it's a symbolic link, print the target path
+    if (islink && S_ISLNK(file_stat->st_mode)) {
+        char link_target[1024];
+        ssize_t len = readlink(path, link_target, sizeof(link_target) - 1);
+        if (len != -1) {
+            link_target[len] = '\0';  // Null-terminate the link target
+            printf(" -> %s", link_target);
+        }
+    }
+
+    printf("\n");
+}
+
+
+void Cmd_listdir (char *pcs[]){
+    int i, ishid, islong, isacc, islink;
+    ishid = islong = isacc = islink = 0;
+
+    if (pcs[1] == NULL) {
+        Cmd_cwd(pcs);  // just prints cwd
+        return;
+    }
+
+
+    for (i = 0; pcs[i] != NULL; i++) { //need to know what to print
+        if (strcmp(pcs[i], "-hid") == 0) ishid = 1; //hidden files
+        else if (strcmp(pcs[i], "-long") == 0) islong = 1; //long list
+        else if (strcmp(pcs[i], "-link") == 0) islink = 1; //if symbolic link -> content path
+        else if (strcmp(pcs[i], "-acc") == 0) isacc = 1; //access time
+        else break;  // now it is the dir name
+    }
+
+    //LIST CONTENTS
+    for (; pcs[i] != NULL; i++) {
+        DIR *dir = opendir(pcs[i]);  // Open directory
+        if (dir == NULL) {
+            printf("Cannot list %s: %s\n", pcs[i], strerror(errno));
+            continue;
+        }
+
+        printf("\nDirectory: %s\n", pcs[i]);
+
+        struct dirent *entry; //dirent represents directory entry
+        while ((entry = readdir(dir)) != NULL) {
+            char path[1024];
+            // Build the full path to the file
+            snprintf(path, sizeof(path), "%s/%s", pcs[i], entry->d_name);
+
+            // Skip the special directories "." and ".."
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+                continue;
+
+            // check for hidden files if -hid is not set to not print them
+            if (!ishid && entry->d_name[0] == '.') {
+                continue;  // skip hidden files
+            }
+
+            // if -long=1, show detailed information
+            if (islong) {
+                struct stat file_stat;
+                if (stat(path, &file_stat) == 0) {
+                    print_file_info(path, &file_stat, islong, isacc, islink);
+                } else {
+                    printf("Error getting info for %s: %s\n", entry->d_name, strerror(errno));
+                }
+            }
+        }
+        closedir(dir);  //close the directory
+    }
 }
 void Cmd_reclist (char *pcs[]){
+    int i, ishid, islong, isacc, islink;
+    ishid = islong = isacc = islink = 0;
 
+    // check if any directory arguments are provided
+    if (pcs[1] == NULL) {
+        Cmd_cwd(pcs);  // just prints current working directory
+        return;
+    }
+
+    // checks what needs to be printed
+    for (i = 1; pcs[i] != NULL; i++) { //start from 1 to skip the command name
+        if (strcmp(pcs[i], "-hid") == 0) ishid = 1; // Hidden files
+        else if (strcmp(pcs[i], "-long") == 0) islong = 1; // Long list
+        else if (strcmp(pcs[i], "-link") == 0) islink = 1; // If symbolic link -> content path
+        else if (strcmp(pcs[i], "-acc") == 0) isacc = 1; // Access time
+        else break;  // Now it is the directory name
+    }
+
+    // Now `i` points to the directory name
+    for (; pcs[i] != NULL; i++) {
+        DIR *dir = opendir(pcs[i]); // Open directory
+        if (dir == NULL) {
+            printf("Cannot open directory %s: %s\n", pcs[i], strerror(errno));
+            continue;
+        }
+
+        printf("\nDirectory: %s\n", pcs[i]);
+
+        struct dirent *entry;
+        struct stat file_stat;
+
+        while ((entry = readdir(dir)) != NULL) {
+            char path[1024];
+
+            // Build the full path to the file
+            snprintf(path, sizeof(path), "%s/%s", pcs[i], entry->d_name);
+
+            // Skip the special directories "." and ".."
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+                continue;
+
+            // Skip hidden files unless -hid is specified
+            if (!ishid && entry->d_name[0] == '.')
+                continue;
+
+            // Use lstat() to get file information (without following symbolic links)
+            if (lstat(path, &file_stat) == -1) {
+                printf("Error getting info for %s: %s\n", path, strerror(errno));
+                continue;
+            }
+
+            // Print the file information based on the specified flags
+            print_file_info(path, &file_stat, islong, isacc, islink);
+
+            // If the file is a directory, call Cmd_reclist recursively
+            if (S_ISDIR(file_stat.st_mode)) {
+                char *sub_args[] = { pcs[0], pcs[i], NULL }; // Create a new argument array for the subdirectory
+                Cmd_reclist(sub_args);  // Recursive call for the subdirectory
+            }
+        }
+
+        closedir(dir); // Close the directory
+    }
 }
 void Cmd_revlist (char *pcs[]){
 
