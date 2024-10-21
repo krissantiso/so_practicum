@@ -70,7 +70,7 @@ int main(int argc, char * argv []){
     hCreateEmptyList(&hisList);
 
     fCreateEmptyList(&ofList);
-    /*fInitializeList(&ofList);*/
+    fInitializeList(&ofList);
 
     while (1){
         printf ("-> ");

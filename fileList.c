@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
+#define MAX 2048
+
 fPosL fFirst(fList L){
     //the first position is the position L points to
     return (L);
@@ -52,7 +54,15 @@ void fPrintList(fList L){
         pos = fFirst(L);
         while (pos != NULL) {
             item = fGetItem(pos, L);
-            printf(" - %d > %s - %s\n", item.fileDescriptor, item.fileName, item.fileMode);
+
+            int iMode = fcntl(item.fileDescriptor, F_GETFL);
+            char sMode[MAX];
+            strcpy(sMode, "");
+            if (iMode & O_WRONLY) strcpy(sMode, "- O_WRONLY");
+            if (iMode & O_RDWR) strcpy(sMode, "- O_RDWR");
+            if (iMode & O_APPEND) strcpy(sMode, "- O_APPEND");
+
+            printf(" - %d > %s %s\n", item.fileDescriptor, item.fileName, sMode);
             pos = fNext(pos, L);
         }
     }
@@ -62,7 +72,6 @@ void fCreateEmptyList(fList* L){
     *L = NULL;
 }
 
-/*
 void fInitializeList(fList* L){
     fItemL item;
     int i;
@@ -74,11 +83,9 @@ void fInitializeList(fList* L){
             case 2: strcpy(item.fileName, "standart error"); break;
             default: strcpy(item.fileName, "null"); break;
         }
-        strcpy(item.fileMode, "O_RDWR");
         fInsertItem(item, L);
     }
 }
-*/
 
 bool fIsEmptyList(fList L){
     return (L == NULL);
