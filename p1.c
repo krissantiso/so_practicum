@@ -76,16 +76,17 @@ int main(int argc, char * argv []){
         printf ("-> ");
         fgets(line,MAX,stdin);
         strcpy(command, line);
+
         if (breakLine(line,pcs)==0) {
             continue;
         }
+        if (!hInsertItem(command, &hisList)) {
+            printf("There has been an error when adding to historic\n");
+        }
 
-        if ( !DoCommand(pcs) ) {
+        DoCommand(pcs) ) { //even if it is not stored, we do the command
             continue;
         }
-        if ( hInsertItem(command, &hisList) ) {
-            continue;
-        }
-        printf("There has been an error when adding to historic\n");
+
     }
 }
