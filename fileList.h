@@ -22,6 +22,7 @@ typedef fPosL fList;
 
 fPosL fFirst(fList L);
 fPosL fNext(fPosL pos, fList L);
+int fLastDescriptor(fList L);
 void fPrintList(fList L);
 void fCreateEmptyList(fList* L);
 void fInitializeList(fList* L); //adds the already open files to the list

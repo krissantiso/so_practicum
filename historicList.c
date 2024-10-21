@@ -86,7 +86,7 @@ void hPrintNElems(int n, hList L){
 
     // Print the last n commands
     for (i = 0; i < n; i++) {
-        printf(" %d: %s\n", size - i, pos->command);  // Print the command with its position in the list
+        printf(" %d: %s", size - i, pos->command);  // Print the command with its position in the list
         pos = hPrevious(pos, L);  // Move to the previous element in the list
     }
 }

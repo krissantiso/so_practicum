@@ -79,13 +79,12 @@ int main(int argc, char * argv []){
         if (breakLine(line,pcs)==0) {
             continue;
         }
+        if ( !hInsertItem(command, &hisList) ) {
+            printf("There has been an error when adding to historic\n");
+        }
 
         if ( !DoCommand(pcs) ) {
             continue;
         }
-        if ( hInsertItem(command, &hisList) ) {
-            continue;
-        }
-        printf("There has been an error when adding to historic\n");
     }
 }
