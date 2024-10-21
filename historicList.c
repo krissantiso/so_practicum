@@ -61,7 +61,7 @@ void hPrintList(hList L){
     if (!hIsEmptyList(L)) {
         pos = hFirst(L);
         while (pos != NULL) {
-            printf(" %d: %s\n", i, pos->command);
+            printf(" %d: %s", i, pos->command);
             i++;
             pos = hNext(pos, L);
         }

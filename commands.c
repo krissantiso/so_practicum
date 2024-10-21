@@ -105,7 +105,7 @@ void Cmd_historic(char *pcs[]) {
 
 void Cmd_open (char *pcs[]){
     if ( pcs[0] == NULL ){
-        printf("No argument introduced\n");
+        fPrintList(ofList);
         return;
     }
     int i, df, mode = 0;
@@ -124,7 +124,7 @@ void Cmd_open (char *pcs[]){
     } else {
         fItemL item;
         item.fileDescriptor = df;
-        item.fileName = strdup(pcs[0]);
+        strcpy(item.fileName, pcs[0]);
 
         switch (mode) {
             case 0: strcpy(item.fileMode, "O_RDONLY"); break;
@@ -135,12 +135,12 @@ void Cmd_open (char *pcs[]){
             case 512: strcpy(item.fileMode, "O_TRUNC"); break;
             case 1024: strcpy(item.fileMode, "O_APPEND"); break;
         }
-
+        /*
         if ( fInsertItem(item, &ofList) ) {
             printf("Added entry %d to the open files table \n", item.fileDescriptor);
         } else {
             printf("There has been an error trying to add the file\n");
-        }
+        }*/
 
     }
 }
@@ -348,6 +348,7 @@ void Cmd_quit (char *pcs[]){
 
 
 
+//Practice 1 commands
 
 
 void Cmd_cwd (char *pcs[]){
@@ -374,4 +375,26 @@ void Cmd_makefile (char *pcs[]){
     printf("%s was created\n", pcs[0]);
 
     fclose(file); //we just want to create the file
+}
+
+void Cmd_makedir (char *pcs[]){
+
+}
+void Cmd_listfile (char *pcs[]){
+
+}
+void Cmd_listdir (char *pcs[]){
+
+}
+void Cmd_reclist (char *pcs[]){
+
+}
+void Cmd_revlist (char *pcs[]){
+
+}
+void Cmd_erase (char *pcs[]){
+
+}
+void Cmd_delrec (char *pcs[]){
+
 }

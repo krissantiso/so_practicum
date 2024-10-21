@@ -62,6 +62,7 @@ void fCreateEmptyList(fList* L){
     *L = NULL;
 }
 
+/*
 void fInitializeList(fList* L){
     fItemL item;
     int i;
@@ -77,6 +78,7 @@ void fInitializeList(fList* L){
         fInsertItem(item, L);
     }
 }
+*/
 
 bool fIsEmptyList(fList L){
     return (L == NULL);
