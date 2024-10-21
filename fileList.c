@@ -12,13 +12,23 @@ fPosL fFirst(fList L){
 }
 
 //function that returns the last position of a given list
-fPosL last(fList L){
+fPosL fLast(fList L){
     fList p=L;
     //it searches for the last position by iterating until the positions next is null and returns it
     while (p->next != NULL) {
         p = p->next;
     }
     return p;
+}
+
+int fLastDescriptor(fList L){
+    fList p=L;
+    //it searches for the last position by iterating until the positions next is null
+    while (p->next != NULL) {
+        p = p->next;
+    }
+    fItemL item = fGetItem(p, L);
+    return item.fileDescriptor;
 }
 
 //function that returns the next position of a given position
@@ -28,7 +38,7 @@ fPosL fNext(fPosL pos, fList L){
 }
 
 //function that returns the previous position of a given position
-fPosL previous(fPosL pos, fList L){
+fPosL fPrevious(fPosL pos, fList L){
     fList p=L;
     if (pos == L){
         //if the position is the first one then it doesnt have a previous position

@@ -85,23 +85,31 @@ void execHistoric (int num, char *pcs[]) {
 
 //me gusto mas mi funcion asi q la use y ya :p
 void Cmd_historic(char *pcs[]) {
+    int n;
 
-    if (pcs[0]==NULL) {
+    if (pcs[0] == NULL) {
         hPrintList(hisList);
         return;
     }
-    char *end;
-    long int num;
-    num = strtol(pcs[0], &end, 10);
-
-    if (*end != '\0') {
-        printf("Invalid argument %s\n", pcs[0]);
+    n = atoi(pcs[0]);
+    if (n==0){
+        printf("Please insert a valid number\n");
         return;
     }
-    if ( *pcs[0]==*"-" ) {
-        hPrintNElems(num, hisList);
-    } else {
-        execHistoric(num, pcs);
+    if (n>0) {
+        char *line; //helps finding the command
+        line = hGetItem(n, hisList);
+        if(line==NULL){
+            printf("There is no command at this position\n");
+            return;
+        }
+        if (breakLine(line,pcs)>0) {
+            if(DoCommand(pcs)) return;
+        }
+    }else { //just to ensure the number is valid
+        n = abs(atoi(pcs[0]));
+        hPrintNElems(n, hisList);
+        return;
     }
 }
 
@@ -221,13 +229,19 @@ void Cmd_dup (char * tr[])
         return;
     }
 
-    duplicado=dup(df);
-    pos= fFindItem(df,ofList);
+    duplicado = dup(df);
+    pos = fFindItem(df,ofList);
     item1 = fGetItem(pos, ofList);
-    p= item1.fileName;
+    p = item1.fileName;
     sprintf (aux,"dup %d (%s)",df, p);
-    fInsertItem(item1, &ofList);
-    fcntl(duplicado,F_GETFL);
+    fItemL item2;
+    strcpy(item2.fileName, aux);
+
+    int descriptor = fLastDescriptor(ofList) + 1;
+    item2.fileDescriptor = descriptor;;
+
+    fInsertItem(item2, &ofList);
+
     printf("The file has been duplicated\n");
 }
 
