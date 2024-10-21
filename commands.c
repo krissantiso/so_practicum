@@ -79,7 +79,7 @@ void execHistoric (int num, char *pcs[]) {
         return;
     }
     if (breakLine(line,pcs)>0) {
-        if(DoCommand(pcs)) return;
+        DoCommand(pcs);
     }
 }
 
@@ -104,7 +104,7 @@ void Cmd_historic(char *pcs[]) {
             return;
         }
         if (breakLine(line,pcs)>0) {
-            if(DoCommand(pcs)) return;
+            DoCommand(pcs);
         }
     }else { //just to ensure the number is valid
         n = abs(atoi(pcs[0]));
