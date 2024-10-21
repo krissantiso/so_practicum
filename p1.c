@@ -33,6 +33,15 @@ struct CMD C[]={ //array of structures: i dont need to declare the dimension, bc
         {"quit", Cmd_quit},
         {"exit", Cmd_quit},
         {"bye", Cmd_quit},
+    	{"makefile",Cmd_makefile},
+	    {"makedir",Cmd_makedir},
+    	{"listfile",Cmd_listfile},
+    	{"cwd",Cmd_cwd},
+    	{"listdir",Cmd_listdir},
+    	{"recdir",Cmd_reclist},
+    	{"revdir",Cmd_revlist},
+    	{"erase",Cmd_erase},
+    	{"delrec",Cmd_delrec},
         {NULL,NULL}
 };
 

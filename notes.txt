@@ -1,3 +1,3 @@
 close a - infinite loop
-Add new help for P1 functions
-Add p1 functions to command struct
+
+DoCommand dosent need to be bool
