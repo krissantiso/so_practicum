@@ -1,8 +1,9 @@
 #ifndef FILELIST_H
 #define FILELIST_H
 #include <stdbool.h>
+#define MAX 2048
 
-typedef char *fFileName;
+typedef char fFileName[MAX];
 typedef char *fFileMode;
 
 typedef struct fNode* fPosL;
@@ -10,7 +11,6 @@ typedef struct fNode* fPosL;
 typedef struct fItemL {
     fFileName fileName;
     int fileDescriptor;
-    fFileMode fileMode;
 } fItemL;
 
 struct fNode{

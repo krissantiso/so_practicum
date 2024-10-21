@@ -108,7 +108,9 @@ void Cmd_open (char *pcs[]){
         fPrintList(ofList);
         return;
     }
+    fItemL item;
     int i, df, mode = 0;
+
     for (i=1; pcs[i]!=NULL; i++){
         if (!strcmp(pcs[i],"cr")) mode|=O_CREAT;
         else if (!strcmp(pcs[i],"ex")) mode|=O_EXCL;
@@ -119,28 +121,19 @@ void Cmd_open (char *pcs[]){
         else if (!strcmp(pcs[i],"tr")) mode|=O_TRUNC;
         else break;
     }
+
     if ((df=open(pcs[0],mode,0777))==-1) {
         perror ("Impossible to open file");
     } else {
-        fItemL item;
+
         item.fileDescriptor = df;
         strcpy(item.fileName, pcs[0]);
 
-        switch (mode) {
-            case 0: strcpy(item.fileMode, "O_RDONLY"); break;
-            case 1: strcpy(item.fileMode, "O_WRONLY"); break;
-            case 2: strcpy(item.fileMode, "O_RDWR"); break;
-            case 64: strcpy(item.fileMode, "O_CREAT"); break;
-            case 128: strcpy(item.fileMode, "O_EXECL"); break;
-            case 512: strcpy(item.fileMode, "O_TRUNC"); break;
-            case 1024: strcpy(item.fileMode, "O_APPEND"); break;
-        }
-        /*
         if ( fInsertItem(item, &ofList) ) {
             printf("Added entry %d to the open files table \n", item.fileDescriptor);
         } else {
             printf("There has been an error trying to add the file\n");
-        }*/
+        }
 
     }
 }
