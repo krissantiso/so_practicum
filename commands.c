@@ -353,7 +353,105 @@ void helpBye (char *pcs[]) {
 }
 
 void helpCommands (char *pcs[]) {
-    printf("authors - pid - ppid - cd [dir] - date [-d/-t] - historic [N/-N] - open [file] mode - close [df] - dup [df] - infosys - help [cmd] - quit - exit - bye\n");
+    printf("authors - pid - ppid - cd - date - historic - open - close - dup - infosys - help - quit - exit - bye"
+		" - makefile - makedir - listfile - cwd - listdir - reclist - revlist - erase - delrec\n");
+}
+
+void helpMakefile (char *pcs[]) {
+	printf("makefile [name]: creates a file named name\n");
+}
+
+void helpMakedir (char *pcs[]) {
+	printf("makedir [name]: creates a directory named name\n");
+}
+
+void helpListfile (char *pcs[]) {
+	if (pcs[0]==NULL) {
+		printf("listfile [-long][-link][-acc] n1 n2: lists files\n");
+		printf("\t-long: long list\n");
+		printf("\t-acc: acesstime\n");
+    	printf("\t-link: if it's a symbolic link it shows the contained path\n");
+    } else if (strcmp(pcs[0], "-long") == 0) {
+    	printf("listfile -long n1 n2: long list\n");
+    } else if (strcmp(pcs[0], "-acc") == 0) {
+    	printf("listfile -acc n1 n2: acesstime\n");
+    } else if (strcmp(pcs[0], "-link") == 0) {
+    	printf("listfile -link n1 n2: if it's a symbolic link it shows the contained path\n");
+    } else {
+    	printf("Invalid argument %s\n", pcs[0]);
+    }
+}
+
+void helpCwd (char *pcs[]) {
+	printf("cwd: list actual shell directory\n");
+}
+
+void helpListdir (char *pcs[]) {
+  	if (pcs[0]==NULL) {
+		printf("listdir [-hid][-long][-link][-acc] n1 n2: lists directory contents\n");
+		printf("\t-long: long list\n");
+    	printf("\t-hid: includes hidden files\n");
+		printf("\t-acc: acesstime\n");
+    	printf("\t-link: if it's a symbolic link it shows the contained path\n");
+    } else if (strcmp(pcs[0], "-long") == 0) {
+    	printf("listdir -long n1 n2: long list\n");
+    } else if (strcmp(pcs[0], "-hid") == 0) {
+    	printf("listdir -hid n1 n2: includes hidden files\n");
+    } else if (strcmp(pcs[0], "-acc") == 0) {
+    	printf("listdir -acc n1 n2: acesstime\n");
+    } else if (strcmp(pcs[0], "-link") == 0) {
+    	printf("listdir -link n1 n2: if it's a symbolic link it shows the contained path\n");
+    } else {
+    	printf("Invalid argument %s\n", pcs[0]);
+    }
+}
+
+void helpReclist (char *pcs[]) {
+	if (pcs[0]==NULL) {
+		printf("reclist [-hid][-long][-link][-acc] n1 n2: lists recursively directory contents (subdirectories last)\n");
+		printf("\t-long: long list\n");
+    	printf("\t-hid: includes hidden files\n");
+		printf("\t-acc: acesstime\n");
+    	printf("\t-link: if it's a symbolic link it shows the contained path\n");
+    } else if (strcmp(pcs[0], "-long") == 0) {
+    	printf("reclist -long n1 n2: long list\n");
+    } else if (strcmp(pcs[0], "-hid") == 0) {
+    	printf("reclist -hid n1 n2: includes hidden files\n");
+    } else if (strcmp(pcs[0], "-acc") == 0) {
+    	printf("reclist -acc n1 n2: acesstime\n");
+    } else if (strcmp(pcs[0], "-link") == 0) {
+    	printf("reclist -link n1 n2: if it's a symbolic link it shows the contained path\n");
+    } else {
+    	printf("Invalid argument %s\n", pcs[0]);
+    }
+}
+
+void helpRevlist (char *pcs[]) {
+	if (pcs[0]==NULL) {
+		printf("revlist [-hid][-long][-link][-acc] n1 n2: lists recursively directory contents (subdirectories first)\n");
+		printf("\t-long: long list\n");
+    	printf("\t-hid: includes hidden files\n");
+		printf("\t-acc: acesstime\n");
+    	printf("\t-link: if it's a symbolic link it shows the contained path\n");
+    } else if (strcmp(pcs[0], "-long") == 0) {
+    	printf("revlist -long n1 n2: long list\n");
+    } else if (strcmp(pcs[0], "-hid") == 0) {
+    	printf("revlist -hid n1 n2: includes hidden files\n");
+    } else if (strcmp(pcs[0], "-acc") == 0) {
+    	printf("revlist -acc n1 n2: acesstime\n");
+    } else if (strcmp(pcs[0], "-link") == 0) {
+    	printf("revlist -link n1 n2: if it's a symbolic link it shows the contained path\n");
+    } else {
+    	printf("Invalid argument %s\n", pcs[0]);
+    }
+}
+
+void helpErase (char *pcs[]) {
+	printf("erase [n1 n2 ...]: Deletes empty files or directories\n");
+}
+
+void helpDelrec (char *pcs[]) {
+	printf("delrec [n1 n2 ...]: Deletes non empty files or directories recursively\n");
 }
 
 struct command h[]={
@@ -371,6 +469,15 @@ struct command h[]={
     {"quit",helpQuit},
     {"exit",helpExit},
     {"bye", helpBye},
+    {"makefile",helpMakefile},
+    {"makedir",helpMakedir},
+    {"listfile",helpListfile},
+    {"cwd",helpCwd},
+    {"listdir",helpListdir},
+    {"recdir",helpReclist},
+    {"revdir",helpRevlist},
+    {"erase",helpErase},
+    {"delrec",helpDelrec},
     {NULL,NULL},
 };
 
@@ -390,10 +497,10 @@ void Cmd_help(char *pcs[]) {
 }
 
 void Cmd_quit (char *pcs[]){
-    if (fIsEmptyList(ofList)) {
+    if ( !fIsEmptyList(ofList)) {
         fClearList(&ofList);
     }
-    if (hIsEmptyList(hisList)) {
+    if ( !hIsEmptyList(hisList)) {
         hClearList(&hisList);
     }
     exit(0); //the program is terminating successfully

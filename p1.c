@@ -33,6 +33,15 @@ struct CMD C[]={ //array of structures: i dont need to declare the dimension, bc
         {"quit", Cmd_quit},
         {"exit", Cmd_quit},
         {"bye", Cmd_quit},
+    	{"makefile",Cmd_makefile},
+	    {"makedir",Cmd_makedir},
+    	{"listfile",Cmd_listfile},
+    	{"cwd",Cmd_cwd},
+    	{"listdir",Cmd_listdir},
+    	{"recdir",Cmd_reclist},
+    	{"revdir",Cmd_revlist},
+    	{"erase",Cmd_erase},
+    	{"delrec",Cmd_delrec},
         {NULL,NULL}
 };
 
@@ -84,10 +93,9 @@ int main(int argc, char * argv []){
             printf("There has been an error when adding to historic\n");
         }
 
-        DoCommand(pcs); //even if it is not stored, we do the command
-
-}
-
+        if ( DoCommand(pcs) ) { //even if it is not stored, we do the command
+            continue;
+        }
 
     }
 }
