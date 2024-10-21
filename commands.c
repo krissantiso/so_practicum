@@ -521,25 +521,28 @@ void Cmd_makefile (char *pcs[]){
         printf("The name of the file needs to be provided\n");
         return;
     }
-    FILE *file = fopen(pcs[0], "r"); //fopen in mode "r" tries to open the file in read mode
-    if (file!=NULL){ //fopen could open the file so that means the file already exists
-        printf("Thhis file: %s already exists\n", pcs[0]);
+    int df = open(pcs[0], O_CREAT|O_TRUNC|O_WRONLY|O_EXCL, 0777);
+    if ( df == -1 ) {
+		printf("Cannot create. Error number is %d (%s)\n", errno, strerror(errno));
         return;
     }
-    file = fopen(pcs[0], "w"); //create the file in writer mode
-    if (file==NULL) { //fopen fails
-        printf("The file could not be created: %s\n", strerror(errno));
-        return;
-    }
-
     printf("%s was created\n", pcs[0]);
-
-    fclose(file); //we just want to create the file
+    close(df);
 }
 
 void Cmd_makedir (char *pcs[]){
-
+	if (pcs[0]==NULL) {
+        printf("The name of the directory needs to be provided\n");
+        return;
+    }
+    int ok = mkdir(pcs[0], 0777);
+	if ( ok != 0 ) {
+    	printf("Cannot create. Error number is %d (%s)\n", errno, strerror(errno));
+        return;
+	}
+    printf("%s was created\n", pcs[0]);
 }
+
 void Cmd_listfile (char *pcs[]){
 
 }

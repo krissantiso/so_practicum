@@ -1,3 +1,4 @@
 close a - infinite loop
 
-DoCommand dosent need to be bool
+DoCommand doesnt need to be bool
+When printing the open files it says O_APPEND to the standard input
