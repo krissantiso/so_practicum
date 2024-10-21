@@ -511,7 +511,7 @@ void Cmd_listdir (char *pcs[]){
             continue;
         }
 
-        printf("\nDirectory: %s\n", pcs[i]);
+        printf("\n************%s\n", pcs[i]);
 
         struct dirent *entry; //dirent represents directory entry
         while ((entry = readdir(dir)) != NULL) {
