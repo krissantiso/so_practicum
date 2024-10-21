@@ -13,6 +13,8 @@
 #include <time.h>
 #include <fcntl.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 void Cmd_authors (char *pcs[]){
     if ( pcs[0] == NULL ) {
