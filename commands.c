@@ -183,7 +183,7 @@ void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
     }
 }
 
-void printREC(char *fName, bool lonG, bool linK, bool acC, bool hiD, bool recA, bool recB){
+void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isRec, int isRev){
 
     if(!hiD && fName[0] == '.')
         return;
@@ -202,7 +202,7 @@ void printREC(char *fName, bool lonG, bool linK, bool acC, bool hiD, bool recA, 
                 chdir(fName);
                 while ((ent = readdir (dirc)) != NULL){
                     if(strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")){
-                        if(recB){
+                        if(isRev){
                             printREC(ent->d_name, lonG, linK, acC, hiD, recA, recB);
                             printLISTDIR(ent->d_name, lonG, linK, acC, hiD);
                         }
