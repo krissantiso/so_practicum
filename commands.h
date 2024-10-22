@@ -22,7 +22,7 @@ void Cmd_infosys (char *pcs[]);
 void Cmd_help (char *pcs[]);
 void Cmd_quit (char *pcs[]);
 int breakLine (char *lin, char *pz[]);
-bool DoCommand (char *pcs[]);
+void DoCommand (char *pcs[]);
 
 void Cmd_makefile (char *pcs[]);
 void Cmd_makedir (char *pcs[]);

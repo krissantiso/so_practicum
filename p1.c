@@ -56,19 +56,18 @@ int breakLine(char *line, char *pcs[]) {
     return i;
 }
 
-bool DoCommand (char *pcs[]) {
+void DoCommand (char *pcs[]) {
     int i; // automatic variable
     if (pcs[0] == NULL)
-        return false;
+        return;
 
     for (i = 0; C[i].name != NULL; i++) {
         if (strcmp(pcs[0], C[i].name) == 0) {  // Corrected the strcmp condition
             (*C[i].function)(pcs + 1);  // Call the corresponding function with pcs+1 as arguments
-            return true;
+            return;
         }
     }
     printf("Command %s not found\n", pcs[0]);  // If no command matched
-    return false;
 }
 
 int main(int argc, char * argv []){
@@ -93,9 +92,7 @@ int main(int argc, char * argv []){
             printf("There has been an error when adding to historic\n");
         }
 
-        if ( DoCommand(pcs) ) { //even if it is not stored, we do the command
-            continue;
-        }
+        DoCommand(pcs);
 
     }
 }
