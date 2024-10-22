@@ -110,16 +110,16 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                 } else {
                     print_modtime(buffer);
                 }
-                perm = (char *)malloc(12);
-                if (perm == NULL) {
+                perm = (char *)malloc(12); //allocate mem for permissions
+                if (perm == NULL) { //if allocation fails
                     fprintf(stderr, "Memory allocation failed\n");
                     return;  // Handle allocation failure
                 }
-                ConvierteModo(buffer.st_mode, perm);
+                ConvierteModo(buffer.st_mode, perm); //converts mode to permissions
                 printf(" %2d (%8d) %8s %8s %14s %6d %s",
                 print_hardlinks(buffer), print_inoden(buffer),
                        print_owner(buffer), print_group(buffer),
-                       perm, print_size(buffer), fName);
+                       perm, print_size(buffer), fName); //print all info
                 free(perm);
                 if (isLink) {
                     ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
@@ -762,7 +762,7 @@ void Cmd_listfile (char *pcs[]){
     for (i = i; pcs[i] != NULL; i++) {
     	struct stat stats;
     	if ( lstat(pcs[i], &stats) == 0) {
-            printFile(pcs[i], isLink, isLong, isAcc, isHid);
+            printFile(pcs[i], isLong, isLink, isAcc, isHid);
    		}else {
             printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
    		}
