@@ -38,8 +38,8 @@ struct CMD C[]={ //array of structures: i dont need to declare the dimension, bc
     	{"listfile",Cmd_listfile},
     	{"cwd",Cmd_cwd},
     	{"listdir",Cmd_listdir},
-    	{"recdir",Cmd_reclist},
-    	{"revdir",Cmd_revlist},
+    	{"reclist",Cmd_reclist},
+    	{"revlist",Cmd_revlist},
     	{"erase",Cmd_erase},
     	{"delrec",Cmd_delrec},
         {NULL,NULL}

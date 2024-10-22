@@ -97,18 +97,18 @@ char *group_print(struct stat buffer) {
     return (gr == NULL) ? "???????" : gr->gr_name;
 }
 
-void printFile(char *fName, int link, int islong, int acc, int hid) {
-    if (!(!hid && fName[0] == '.')) {
+void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
+    if (!(!isHid && fName[0] == '.')) {
         char toLink[MAX] = "", *perm;
         struct stat buffer;
 
         if (lstat(fName, &buffer) == -1) {
             printf("It is not possible to access %s: %s\n", fName, strerror(errno));
         } else {
-            if (!islong && !acc) {
+            if (!isLong && !isAcc) {
                 printf("%d %s\n", size_print(buffer), fName);
             } else {
-                if (acc) {
+                if (isAcc) {
                     accTime_print(buffer);
                 } else {
                     longTime_print(buffer);
@@ -124,7 +124,7 @@ void printFile(char *fName, int link, int islong, int acc, int hid) {
                        owner_print(buffer), group_print(buffer),
                        perm, size_print(buffer), fName);
                 free(perm);
-                if (link) {
+                if (isLink) {
                     ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
                     if (len != -1) {
                         toLink[len] = '\0';  // Null-terminate the string
@@ -144,7 +144,7 @@ void printFile(char *fName, int link, int islong, int acc, int hid) {
     }
 }
 
-void printLISTDIR(char *fName, bool lonG, bool linK, bool acC, bool hiD){
+void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
     char dir[MAX];
     getcwd(dir, MAX);
     struct stat buffer;
@@ -152,27 +152,71 @@ void printLISTDIR(char *fName, bool lonG, bool linK, bool acC, bool hiD){
     DIR * dirc;
     struct dirent *ent;
 
-    if(lstat(fName, &buffer) == -1)
-        printf("It is not possible to access %s: %s\n", fName, strerror(errno));
+    if(lstat(dirName, &buffer) == -1)
+        printf("It is not possible to access %s: %s\n", dirName, strerror(errno));
     else if (!S_ISREG(buffer.st_mode) && !S_ISLNK(buffer.st_mode)){
-        if ((dirc = opendir(fName)) == NULL)
-            printf("It is not possible to access %s: %s\n", fName, strerror(errno));
+        if ((dirc = opendir(dirName)) == NULL)
+            printf("It is not possible to access %s: %s\n", dirName, strerror(errno));
         else{
-            printf("************%s\n", fName);
-            chdir(fName);
+            if (chdir(dirName) == -1) {
+                printf("Cannot change to directory %s: %s\n", dirName, strerror(errno));
+                closedir(dir);
+                return;
+            }
+
+            printf("************%s\n", dirName);
+
             while ((ent = readdir (dirc)) != NULL){
-                if (!lonG && !acC){
+                if (!isLong && !isAcc){
                     lstat(ent->d_name, &buffer2);
-                    if(hiD)
+                    if(isHid)
                         printf("%d %s\n", size_print(buffer2), ent->d_name);
                     else if(ent->d_name[0] != '.')
                         printf("%d %s\n", size_print(buffer2), ent->d_name);
-                }else if(lonG || acC)
-                    printFile(ent->d_name, linK, lonG, acC, hiD);
+                }else if(isLong || isAcc)
+                    printFile(ent->d_name, isLong, isLink, isAcc, isHid);
+
             }
             closedir(dirc);
         }
         chdir(dir);
+    }
+}
+
+void printREC(char *fName, bool lonG, bool linK, bool acC, bool hiD, bool recA, bool recB){
+
+    if(!hiD && fName[0] == '.')
+        return;
+
+    char dir[MAX];
+    getcwd(dir, MAX);
+    struct stat buffer;
+    DIR * dirc;
+    struct dirent *ent;
+
+    if(lstat(fName, &buffer) == -1)
+        printf("It is not possible to access %s: %s\n", fName, strerror(errno));
+    else{
+        if(S_ISDIR(buffer.st_mode)){
+            if ((dirc = opendir(fName)) != NULL){
+                chdir(fName);
+                while ((ent = readdir (dirc)) != NULL){
+                    if(strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")){
+                        if(recB){
+                            printREC(ent->d_name, lonG, linK, acC, hiD, recA, recB);
+                            printLISTDIR(ent->d_name, lonG, linK, acC, hiD);
+                        }
+                        else{
+                            printLISTDIR(ent->d_name, lonG, linK, acC, hiD);
+                            printREC(ent->d_name, lonG, linK, acC, hiD, recA, recB);
+
+                        }
+                    }
+                }
+                closedir(dirc);
+            }
+            chdir(dir);
+        }
     }
 }
 
@@ -704,11 +748,12 @@ void Cmd_makedir (char *pcs[]){
 }
 
 void Cmd_listfile (char *pcs[]){
-	if (pcs[0]==NULL) {
+
+    if (pcs[0]==NULL) {
         printf("The name of the directory needs to be provided\n");
         return;
     }
-    int isLong=0, isLink=0, isAcc=0, i;
+    int isLong=0, isLink=0, isAcc=0, i, isHid=0;
 
     for ( i = 0; pcs[i] != NULL; i++) {
     	if (strcmp(pcs[i], "-long") == 0) isLong = 1;
@@ -720,7 +765,7 @@ void Cmd_listfile (char *pcs[]){
     for (i = i; pcs[i] != NULL; i++) {
     	struct stat stats;
     	if ( lstat(pcs[i], &stats) == 0) {
-            printFile(pcs[i], isLink, isLong, isAcc, 0);
+            printFile(pcs[i], isLink, isLong, isAcc, isHid);
    		}else {
             printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
    		}
@@ -729,53 +774,101 @@ void Cmd_listfile (char *pcs[]){
 
 }
 
-
-
-
-
-
-void Cmd_listdir(char *tr[]) {
+void Cmd_listdir(char *pcs[]) {
     char dir[MAX];
-    getcwd(dir, MAX);
-    struct stat buffer;
-    int i = 0, j = 0, countTRUE = 0;
-    bool islong, acc , hid , link;
-    islong=acc=hid=link=false;
+    int i,j;
+    int isLong, isAcc , isHid , isLink;
+    isLong=isAcc=isHid=isLink;
 
-    for(j = 0; tr[j] != NULL; j++){
-        if(!strcmp(tr[j], "-long")){
-            islong = true;
-            countTRUE++;
-        }else if(!strcmp(tr[j], "-link")){
-            link = true;
-            countTRUE++;
-        }else if(!strcmp(tr[j], "-acc")){
-            acc = true;
-            countTRUE++;
-        }else if(!strcmp(tr[j], "-hid")) {
-            hid = true;
-            countTRUE++;
-        }
+    if (pcs[0]==NULL){
+        Cmd_cwd(pcs);
+        return;
     }
-    if (tr[countTRUE] == NULL)
-        printf("%s\n", dir);
-    else{
-        for (i=countTRUE; tr[i] != NULL; i++){
-            lstat(tr[i], &buffer);
-            if(S_ISDIR(buffer.st_mode))
-                printLISTDIR(tr[i], islong, link, acc, hid);
-            else
-                printFile(tr[i], link, islong, acc, hid);
-        }
+
+    for(j = 0; pcs[j] != NULL; j++){
+        if (strcmp(pcs[j], "-hid") == 0) isHid = 1;
+        else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
+        else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
+        else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
+        else break; //i is the name location
     }
+
+        for (i = j; pcs[i] != NULL; i++) {
+            struct stat buffer;
+            if( lstat(pcs[i], &buffer)==0){
+                if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
+                    printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid);
+                }else
+                    printFile(pcs[i], isLink, isLong, isAcc, isHid);
+            }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+
+        }
+
 }
 
 
 void Cmd_reclist (char *pcs[]){
+    char dir[MAX];
+    int i,j;
+    int isLong, isAcc , isHid , isLink, isRec, isRev;
+    isRec=1;
+    isLong=isAcc=isHid=isLink=isRev=0;
 
+    if (pcs[0]==NULL){
+        Cmd_cwd(pcs);
+        return;
+    }
+
+    for(j = 0; pcs[j] != NULL; j++){
+        if (strcmp(pcs[j], "-hid") == 0) isHid = 1;
+        else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
+        else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
+        else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
+        else break; //i is the name location
+    }
+
+    for (i = j; pcs[i] != NULL; i++) {
+        struct stat buffer;
+        if( lstat(pcs[i], &buffer)==0){
+            if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
+
+                printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid);
+                printREC(pcs[i], isLong, isLink, isAcc, isHid, isRec, isRev);
+            }else
+                printFile(pcs[i], isLink, isLong, isAcc, isHid);
+        }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+    }
 }
 void Cmd_revlist (char *pcs[]){
+    char dir[MAX];
+    int i,j;
+    int isLong, isAcc , isHid , isLink, isRec, isRev;
+    isRev=1;
+    isLong=isAcc=isHid=isLink=isRec=0;
 
+    if (pcs[0]==NULL){
+        Cmd_cwd(pcs);
+        return;
+    }
+
+    for(j = 0; pcs[j] != NULL; j++){
+        if (strcmp(pcs[j], "-hid") == 0) isHid = 1;
+        else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
+        else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
+        else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
+        else break; //i is the name location
+    }
+
+    for (i = j; pcs[i] != NULL; i++) {
+        struct stat buffer;
+        if( lstat(pcs[i], &buffer)==0){
+            if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
+                printREC(pcs[i], isLong, isLink, isAcc, isHid, isRec, isRev);
+                printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid);
+            }else
+                printFile(pcs[i], isLink, isLong, isAcc, isHid);
+        }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+    }
 }
 void Cmd_erase (char *pcs[]){
 
