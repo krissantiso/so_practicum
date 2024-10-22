@@ -64,13 +64,13 @@ int print_hardlinks(struct stat buffer){
     return buffer.st_nlink; //number of hardlinks to the file
 }
 
-void print_modtime(struct stat buffer){
-    time_t mt;
+void print_crtime(struct stat buffer){
+    time_t ct;
     struct tm tm;
-    mt = buffer.st_mtime; //gets modification time of file
-    localtime_r(&mt, &tm); //converts it to local time structure
+    ct = buffer.st_ctime; //gets modification time of file
+    localtime_r(&ct, &tm); //converts it to local time structure
     printf("%04d/%02d/%02d-%02d:%02d ", (tm.tm_year + 1900), (tm.tm_mon + 1), tm.tm_mday, tm.tm_hour, tm.tm_min);
-    //print modification time
+    //print atributres change time (creation)
 }
 
 void print_accesstime(struct stat buffer){
@@ -102,8 +102,12 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
         if (lstat(fName, &buffer) == -1) { //get file information
             printf("It is not possible to access %s: %s\n", fName, strerror(errno)); //error if lstat fails
         } else {
-            if (!isLong && !isAcc) { //if neither long nor acc was requested
-                printf("%d %s", print_size(buffer), fName);
+            if (!isLong) {
+                printf("%d ", print_size(buffer));
+                if (isAcc) {
+                    print_accesstime(buffer);
+                }
+                printf("%s", fName);
                 if (isLink) {
                     if (LetraTF(buffer.st_mode) == 'l') {
                         ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
@@ -124,7 +128,7 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                 if (isAcc) {
                     print_accesstime(buffer);
                 } else {
-                    print_modtime(buffer);
+                    print_crtime(buffer);
                 }
                 perm = (char *)malloc(12); //allocate mem for permissions
                 if (perm == NULL) { //if allocation fails
@@ -180,18 +184,16 @@ void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
                 return;
             }
 
-            printf("************%s\n", dirName);
+            printf("** %s **\n", dirName);
 
             while ((ent = readdir (dirc)) != NULL){
-                if (!isLong && !isAcc){
-                    lstat(ent->d_name, &buffer2);
-                    if(isHid)
-                        printf("%d %s\n", print_size(buffer2), ent->d_name);
-                    else if(ent->d_name[0] != '.')
-                        printf("%d %s\n", print_size(buffer2), ent->d_name);
-                }else if(isLong || isAcc)
-                    printFile(ent->d_name, isLong, isLink, isAcc, isHid);
 
+                lstat(ent->d_name, &buffer2);
+                if(isHid) {
+                    printFile(ent->d_name, isLong, isLink, isAcc, isHid);
+                } else if(ent->d_name[0] != '.') {
+                    printFile(ent->d_name, isLong, isLink, isAcc, isHid);
+                }
             }
             closedir(dirc);
         }
@@ -769,7 +771,7 @@ void Cmd_listfile (char *pcs[]){
         printf("The name of the directory needs to be provided\n");
         return;
     }
-    int isLong=0, isLink=0, isAcc=0, i, isHid=0;
+    int isLong=0, isLink=0, isAcc=0, i;
 
     for ( i = 0; pcs[i] != NULL; i++) {
     	if (strcmp(pcs[i], "-long") == 0) isLong = 1;
@@ -781,7 +783,7 @@ void Cmd_listfile (char *pcs[]){
     for (i = i; pcs[i] != NULL; i++) {
     	struct stat stats;
     	if ( lstat(pcs[i], &stats) == 0) {
-            printFile(pcs[i], isLong, isLink, isAcc, isHid);
+            printFile(pcs[i], isLong, isLink, isAcc, 1);
    		}else {
             printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
    		}

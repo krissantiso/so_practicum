@@ -4,3 +4,6 @@ When printing the open files it says O_APPEND to the standard input
 date doesnt work xd - added 1 to all month calls so it works (ask if it starts at 0)
 
 change help for listfile
+listdir only works until u use -link, then it never works again
+
+reclist and revlist only print one directory contents like listdir and not subdirectories
