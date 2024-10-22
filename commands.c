@@ -13,8 +13,11 @@
 #include <time.h>
 #include <fcntl.h>
 #include <sys/utsname.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
 
 void Cmd_authors (char *pcs[]){
     if ( pcs[0] == NULL ) {
@@ -590,64 +593,193 @@ void print_file_info(const char *path, const struct stat *file_stat, int islong,
 
     printf("\n");
 }
-
-
-void Cmd_listdir (char *pcs[]){
-    int i, ishid, islong, isacc, islink;
-    ishid = islong = isacc = islink = 0;
-
-    if (pcs[1] == NULL) {
-        Cmd_cwd(pcs);  // just prints cwd
-        return;
+char LetraTF(mode_t m) {
+    switch (m & S_IFMT) {
+        case S_IFSOCK: return 's';
+        case S_IFLNK: return 'l';
+        case S_IFREG: return '-';
+        case S_IFBLK: return 'b';
+        case S_IFDIR: return 'd';
+        case S_IFCHR: return 'c';
+        case S_IFIFO: return 'p';
+        default: return '?';
     }
+}
 
+char *ConvierteModo(mode_t m, char *permisos) {
+    strcpy(permisos, "---------- ");
+    permisos[0] = LetraTF(m);
+    if (m & S_IRUSR) permisos[1] = 'r';
+    if (m & S_IWUSR) permisos[2] = 'w';
+    if (m & S_IXUSR) permisos[3] = 'x';
+    if (m & S_IRGRP) permisos[4] = 'r';
+    if (m & S_IWGRP) permisos[5] = 'w';
+    if (m & S_IXGRP) permisos[6] = 'x';
+    if (m & S_IROTH) permisos[7] = 'r';
+    if (m & S_IWOTH) permisos[8] = 'w';
+    if (m & S_IXOTH) permisos[9] = 'x';
+    if (m & S_ISUID) permisos[3] = 's';
+    if (m & S_ISGID) permisos[6] = 's';
+    if (m & S_ISVTX) permisos[9] = 't';
+    return permisos;
+}
 
-    for (i = 0; pcs[i] != NULL; i++) { //need to know what to print
-        if (strcmp(pcs[i], "-hid") == 0) ishid = 1; //hidden files
-        else if (strcmp(pcs[i], "-long") == 0) islong = 1; //long list
-        else if (strcmp(pcs[i], "-link") == 0) islink = 1; //if symbolic link -> content path
-        else if (strcmp(pcs[i], "-acc") == 0) isacc = 1; //access time
-        else break;  // now it is the dir name
-    }
+int size_print(struct stat buffer)
+{
+    return buffer.st_size;
+}
 
-    //LIST CONTENTS
-    for (; pcs[i] != NULL; i++) {
-        DIR *dir = opendir(pcs[i]);  // Open directory
-        if (dir == NULL) {
-            printf("Cannot list %s: %s\n", pcs[i], strerror(errno));
-            continue;
-        }
+int inode_print(struct stat buffer)
+{
+    return buffer.st_ino;
+}
 
-        printf("\n************%s\n", pcs[i]);
+int nlinks_print(struct stat buffer)
+{
+    return buffer.st_nlink;
+}
 
-        struct dirent *entry; //dirent represents directory entry
-        while ((entry = readdir(dir)) != NULL) {
-            char path[1024];
-            // Build the full path to the file
-            snprintf(path, sizeof(path), "%s/%s", pcs[i], entry->d_name);
+void longTime_print(struct stat buffer)
+{
+    time_t mt;
+    struct tm tm;
+    mt = buffer.st_mtime;
+    localtime_r(&mt, &tm);
+    printf("%04d/%02d/%02d-%02d:%02d ", (tm.tm_year + 1900), (tm.tm_mon + 1), tm.tm_mday, tm.tm_hour, tm.tm_min);
+}
 
-            // Skip the special directories "." and ".."
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-                continue;
+void accTime_print(struct stat buffer)
+{
+    time_t at;
+    struct tm tm;
+    at = buffer.st_atime;
+    localtime_r(&at, &tm);
+    printf("%04d/%02d/%02d-%02d:%02d ", (tm.tm_year + 1900), (tm.tm_mon + 1), tm.tm_mday, tm.tm_hour, tm.tm_min);
+}
 
-            // check for hidden files if -hid is not set to not print them
-            if (!ishid && entry->d_name[0] == '.') {
-                continue;  // skip hidden files
-            }
+char *owner_print(struct stat buffer) {
+    int owner = buffer.st_uid;
+    struct passwd *pw = getpwuid(owner);
+    return (pw == NULL) ? "???????" : pw->pw_name;
+}
 
-            // if -long=1, show detailed information
-            if (islong) {
-                struct stat file_stat;
-                if (stat(path, &file_stat) == 0) {
-                    print_file_info(path, &file_stat, islong, isacc, islink);
+char *group_print(struct stat buffer) {
+    int group = buffer.st_gid;  // Change this to use st_gid
+    struct group *gr = getgrgid(group);
+    return (gr == NULL) ? "???????" : gr->gr_name;
+}
+
+void printFile(char *fName, int link, int islong, int acc, int hid) {
+    if (!(!hid && fName[0] == '.')) {
+        char toLink[MAX] = "", *perm;
+        struct stat buffer;
+
+        if (lstat(fName, &buffer) == -1) {
+            printf("It is not possible to access %s: %s\n", fName, strerror(errno));
+        } else {
+            if (!islong && !acc) {
+                printf("%d %s\n", size_print(buffer), fName);
+            } else {
+                if (acc) {
+                    accTime_print(buffer);
                 } else {
-                    printf("Error getting info for %s: %s\n", entry->d_name, strerror(errno));
+                    longTime_print(buffer);
+                }
+                perm = (char *)malloc(12);
+                if (perm == NULL) {
+                    fprintf(stderr, "Memory allocation failed\n");
+                    return;  // Handle allocation failure
+                }
+                ConvierteModo(buffer.st_mode, perm);
+                printf(" %2d (%8d) %8s %8s %14s %6d %s",
+                       nlinks_print(buffer), inode_print(buffer),
+                       owner_print(buffer), group_print(buffer),
+                       perm, size_print(buffer), fName);
+                free(perm);
+                if (link) {
+                    ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
+                    if (len != -1) {
+                        toLink[len] = '\0';  // Null-terminate the string
+                        if (S_ISLNK(buffer.st_mode)) {
+                            printf(" -> %s\n", toLink);
+                        } else {
+                            printf("\n");
+                        }
+                    } else {
+                        printf("Error reading link for %s: %s\n", fName, strerror(errno));
+                    }
+                } else {
+                    printf("\n");
                 }
             }
         }
-        closedir(dir);  //close the directory
     }
 }
+
+int ListDir(char *dirname, int hid, int islong, int link, int acc) {
+    DIR *p;
+    struct dirent *d;
+    struct stat buffer;
+
+    if ((p = opendir(dirname)) == NULL) {
+        return -1;
+    }
+
+    printf("\n************%s\n", dirname);
+
+    char path[1024];
+
+    while ((d = readdir(p)) != NULL) {
+        // Build the full path to the file
+        snprintf(path, sizeof(path), "%s/%s", dirname, d->d_name);
+
+        // Skip the special directories "." and ".."
+        if (strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0) {
+            continue;
+        }
+
+        // Check for hidden files if -hid is not set to not print them
+        if (!hid && d->d_name[0] == '.') {
+            continue;  // Skip hidden files
+        }
+
+        // Get file information
+        if (stat(path, &buffer) == -1) {
+            printf("Error getting info for %s: %s\n", path, strerror(errno));
+            continue;  // Skip to the next entry
+        }
+        printFile(path, link, islong, acc, hid);
+    }
+
+    closedir(p);  // Close the directory stream after finishing
+    return 0;  // Return success
+}
+
+void Cmd_listdir(char *tr[]) {
+    int i, ishid, islong, isacc, islink;
+    ishid = islong = isacc = islink = 0;
+
+    if (tr[0] == NULL) {
+        Cmd_cwd(tr);
+        return;
+    }
+
+    for (i = 0; tr[i] != NULL; i++) {
+        if (strcmp(tr[i], "-hid") == 0) ishid = 1;
+        else if (strcmp(tr[i], "-long") == 0) islong = 1;
+        else if (strcmp(tr[i], "-link") == 0) islink = 1;
+        else if (strcmp(tr[i], "-acc") == 0) isacc = 1;
+        else break;  // Break when we reach a directory name
+    }
+
+    for (; tr[i] != NULL; i++) {  // Ensure 'i' continues after the last valid flag
+        if (ListDir(tr[i], ishid, islong, islink, isacc) == -1) {
+            printf("Cannot list %s: %s\n", tr[i], strerror(errno));
+        }
+    }
+}
+
+
 void Cmd_reclist (char *pcs[]){
     int i, ishid, islong, isacc, islink;
     ishid = islong = isacc = islink = 0;
