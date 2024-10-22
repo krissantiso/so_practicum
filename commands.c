@@ -23,95 +23,92 @@
 
 char LetraTF(mode_t m) {
     switch (m & S_IFMT) {
-        case S_IFSOCK: return 's';
-        case S_IFLNK: return 'l';
-        case S_IFREG: return '-';
-        case S_IFBLK: return 'b';
-        case S_IFDIR: return 'd';
-        case S_IFCHR: return 'c';
-        case S_IFIFO: return 'p';
-        default: return '?';
+        case S_IFSOCK: return 's'; //checks if it is a socket
+        case S_IFLNK: return 'l'; //if symbolic link
+        case S_IFREG: return '-'; //if regular file
+        case S_IFBLK: return 'b'; //if block device
+        case S_IFDIR: return 'd'; //if directory
+        case S_IFCHR: return 'c'; //if character device
+        case S_IFIFO: return 'p'; //if FIFO
+        default: return '?'; //if unknown
     }
 }
 
 char *ConvierteModo(mode_t m, char *permisos) {
-    strcpy(permisos, "---------- ");
+    strcpy(permisos, "---------- "); //sets format to substitute each position by permission
     permisos[0] = LetraTF(m);
-    if (m & S_IRUSR) permisos[1] = 'r';
+    if (m & S_IRUSR) permisos[1] = 'r'; //user read, write and execute
     if (m & S_IWUSR) permisos[2] = 'w';
     if (m & S_IXUSR) permisos[3] = 'x';
-    if (m & S_IRGRP) permisos[4] = 'r';
+    if (m & S_IRGRP) permisos[4] = 'r'; //group read write and execute
     if (m & S_IWGRP) permisos[5] = 'w';
     if (m & S_IXGRP) permisos[6] = 'x';
-    if (m & S_IROTH) permisos[7] = 'r';
+    if (m & S_IROTH) permisos[7] = 'r'; //others read write and execute
     if (m & S_IWOTH) permisos[8] = 'w';
     if (m & S_IXOTH) permisos[9] = 'x';
-    if (m & S_ISUID) permisos[3] = 's';
-    if (m & S_ISGID) permisos[6] = 's';
-    if (m & S_ISVTX) permisos[9] = 't';
+    if (m & S_ISUID) permisos[3] = 's'; //set-user-ID-bit
+    if (m & S_ISGID) permisos[6] = 's'; //set-group-ID-bit
+    if (m & S_ISVTX) permisos[9] = 't'; //sticky-bit
     return permisos;
 }
 
-int size_print(struct stat buffer)
-{
-    return buffer.st_size;
+int print_size(struct stat buffer){
+    return buffer.st_size; //size of file
 }
 
-int inode_print(struct stat buffer)
-{
-    return buffer.st_ino;
+int print_inoden(struct stat buffer){
+    return buffer.st_ino; //inode number of file
 }
 
-int nlinks_print(struct stat buffer)
-{
-    return buffer.st_nlink;
+int print_hardlinks(struct stat buffer){
+    return buffer.st_nlink; //number of hardlinks to the file
 }
 
-void longTime_print(struct stat buffer)
-{
+void print_modtime(struct stat buffer){
     time_t mt;
     struct tm tm;
-    mt = buffer.st_mtime;
-    localtime_r(&mt, &tm);
+    mt = buffer.st_mtime; //gets modification time of file
+    localtime_r(&mt, &tm); //converts it to local time structure
     printf("%04d/%02d/%02d-%02d:%02d ", (tm.tm_year + 1900), (tm.tm_mon + 1), tm.tm_mday, tm.tm_hour, tm.tm_min);
+    //print modification time
 }
 
-void accTime_print(struct stat buffer)
-{
+void print_accesstime(struct stat buffer){
     time_t at;
     struct tm tm;
-    at = buffer.st_atime;
+    at = buffer.st_atime; //gets access time of file
     localtime_r(&at, &tm);
     printf("%04d/%02d/%02d-%02d:%02d ", (tm.tm_year + 1900), (tm.tm_mon + 1), tm.tm_mday, tm.tm_hour, tm.tm_min);
 }
 
-char *owner_print(struct stat buffer) {
-    int owner = buffer.st_uid;
-    struct passwd *pw = getpwuid(owner);
-    return (pw == NULL) ? "???????" : pw->pw_name;
+char *print_owner(struct stat buffer) {
+    int owner = buffer.st_uid; //gets owner's user ID
+    struct passwd *pw = getpwuid(owner); //looks up user info
+    return (pw == NULL) ? "???????" : pw->pw_name; //if couldn't access to info, prints the user as unknown (???)
+    //otherwise prints user name
 }
 
-char *group_print(struct stat buffer) {
-    int group = buffer.st_gid;  // Change this to use st_gid
+char *print_group(struct stat buffer) { //same as print_owner but with group
+    int group = buffer.st_gid;
     struct group *gr = getgrgid(group);
     return (gr == NULL) ? "???????" : gr->gr_name;
 }
 
 void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
-    if (!(!isHid && fName[0] == '.')) {
+    if (!(!isHid && fName[0] == '.')) { //skip hidden files if isHid=0 and if the current file starts with '.'
         char toLink[MAX] = "", *perm;
         struct stat buffer;
 
-        if (lstat(fName, &buffer) == -1) {
-            printf("It is not possible to access %s: %s\n", fName, strerror(errno));
+        if (lstat(fName, &buffer) == -1) { //get file information
+            printf("It is not possible to access %s: %s\n", fName, strerror(errno)); //error if lstat fails
         } else {
-            if (!isLong && !isAcc) {
-                printf("%d %s\n", size_print(buffer), fName);
+            if (!isLong && !isAcc) { //if neither long nor acc was requested
+                printf("%d %s\n", print_size(buffer), fName);
             } else {
                 if (isAcc) {
-                    accTime_print(buffer);
+                    print_accesstime(buffer);
                 } else {
-                    longTime_print(buffer);
+                    print_modtime(buffer);
                 }
                 perm = (char *)malloc(12);
                 if (perm == NULL) {
@@ -120,9 +117,9 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                 }
                 ConvierteModo(buffer.st_mode, perm);
                 printf(" %2d (%8d) %8s %8s %14s %6d %s",
-                       nlinks_print(buffer), inode_print(buffer),
-                       owner_print(buffer), group_print(buffer),
-                       perm, size_print(buffer), fName);
+                print_hardlinks(buffer), print_inoden(buffer),
+                       print_owner(buffer), print_group(buffer),
+                       perm, print_size(buffer), fName);
                 free(perm);
                 if (isLink) {
                     ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
@@ -170,9 +167,9 @@ void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
                 if (!isLong && !isAcc){
                     lstat(ent->d_name, &buffer2);
                     if(isHid)
-                        printf("%d %s\n", size_print(buffer2), ent->d_name);
+                        printf("%d %s\n", print_size(buffer2), ent->d_name);
                     else if(ent->d_name[0] != '.')
-                        printf("%d %s\n", size_print(buffer2), ent->d_name);
+                        printf("%d %s\n", print_size(buffer2), ent->d_name);
                 }else if(isLong || isAcc)
                     printFile(ent->d_name, isLong, isLink, isAcc, isHid);
 
@@ -185,7 +182,7 @@ void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
 
 void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isRec, int isRev){
 
-    if(!hiD && fName[0] == '.')
+    if(!isHid && fName[0] == '.')
         return;
 
     char dir[MAX];
@@ -203,12 +200,12 @@ void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isR
                 while ((ent = readdir (dirc)) != NULL){
                     if(strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")){
                         if(isRev){
-                            printREC(ent->d_name, lonG, linK, acC, hiD, recA, recB);
-                            printLISTDIR(ent->d_name, lonG, linK, acC, hiD);
+                            printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev);
+                            printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid);
                         }
                         else{
-                            printLISTDIR(ent->d_name, lonG, linK, acC, hiD);
-                            printREC(ent->d_name, lonG, linK, acC, hiD, recA, recB);
+                            printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid);
+                            printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev);
 
                         }
                     }
