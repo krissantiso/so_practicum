@@ -103,7 +103,23 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
             printf("It is not possible to access %s: %s\n", fName, strerror(errno)); //error if lstat fails
         } else {
             if (!isLong && !isAcc) { //if neither long nor acc was requested
-                printf("%d %s\n", print_size(buffer), fName);
+                printf("%d %s", print_size(buffer), fName);
+                if (isLink) {
+                    if (LetraTF(buffer.st_mode) == 'l') {
+                        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
+                        if (len != -1) {
+                            toLink[len] = '\0';  // Null-terminate the string
+                            if (S_ISLNK(buffer.st_mode)) {
+                                printf(" -> %s", toLink);
+                            } else {
+                                printf("\n");
+                            }
+                        } else {
+                            printf("Error reading link for %s: %s", fName, strerror(errno));
+                        }
+                    }
+                }
+                printf("\n");
             } else {
                 if (isAcc) {
                     print_accesstime(buffer);
@@ -122,17 +138,20 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                        perm, print_size(buffer), fName); //print all info
                 free(perm);
                 if (isLink) {
-                    ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
-                    if (len != -1) {
-                        toLink[len] = '\0';  // Null-terminate the string
-                        if (S_ISLNK(buffer.st_mode)) {
-                            printf(" -> %s\n", toLink);
+                    if (LetraTF(buffer.st_mode) == 'l') {
+                        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
+                        if (len != -1) {
+                            toLink[len] = '\0';  // Null-terminate the string
+                            if (S_ISLNK(buffer.st_mode)) {
+                                printf(" -> %s\n", toLink);
+                            } else {
+                                printf("\n");
+                            }
                         } else {
-                            printf("\n");
+                            printf("Error reading link for %s: %s\n", fName, strerror(errno));
                         }
-                    } else {
-                        printf("Error reading link for %s: %s\n", fName, strerror(errno));
-                    }
+                    } else printf("\n");
+
                 } else {
                     printf("\n");
                 }
