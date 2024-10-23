@@ -645,6 +645,7 @@ void Cmd_revlist (char *pcs[]){
         }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
     }
 }
+
 void Cmd_erase (char *pcs[]){
     if (pcs[0]==NULL){
         printf("The name of the file or directory must be especified");
@@ -659,38 +660,28 @@ void Cmd_erase (char *pcs[]){
     }
 }
 
-void auxDelrec (char dir[]) {
-    //treaverse directory
-    //while dir!=NULL next file
-        //try to delete
-        //if not then cd to there
-        //ex auxDelrec there
+void auxDel (char *path) {
     struct dirent *de;
-    DIR *dr = opendir(".");
-    if (dr == NULL) {
-        printf("Couldnt open directory %s. Error number is %d (%s)\n", dir, errno, strerror(errno));
+    DIR *dr = opendir(path);
+    if( dr == NULL) {
+        printf("No file or directory found (%s)\n", path);
         return;
     }
-    while ((de = readdir(dr)) != NULL) {
-        if (de->d_name[0] == '.' && (de->d_name[1] == '\0' || de->d_name[1] == '.')) {
+    while((de = readdir(dr)) != NULL) {
+        char newDir[MAX];
+        sprintf(newDir,"%s/%s",path,de->d_name);
+        if ( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 ) {
             continue;
         }
-        printf("im in %s before removing\n", de->d_name);
-        if ( remove(de->d_name) == 0 ) {
-            printf("%s deleted\n", de->d_name);
-            continue;
+        if ( remove(newDir) != 0 ) {
+            auxDel(newDir);
         }
-        printf("im going to %s\n", de->d_name);
-        chdir(de->d_name);
-        auxDelrec(de->d_name);
-        printf("i delted %s contents\n", de->d_name);
-        if ( remove(de->d_name) == 0 ) {
-            printf("%s deleted\n", de->d_name);
-            continue;
-        }
-        printf("why couldnt i delete %s\n", de->d_name);
+
     }
     closedir(dr);
+    if ( remove(path) != 0 ) {
+        printf("Cannot delete %s: Error number is %d (%s)\n", path, errno, strerror(errno));
+    }
 }
 
 void Cmd_delrec (char *pcs[]){
@@ -709,14 +700,9 @@ void Cmd_delrec (char *pcs[]){
             printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno));
             continue;
         }
-        printf("Cambie de directorio\n");
         char dir[MAX];
-        strcpy(dir, pcs[i]);
-        auxDelrec(dir);
-        if ( remove(pcs[i]) == 0 ) {
-            printf("%s deleted\n", pcs[i]);
-            continue;
-        }
+        strcpy(dir, getcwd(dir, MAX));
+        auxDel(dir);
         chdir(cwd);
     }
 }
