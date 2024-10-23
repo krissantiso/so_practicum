@@ -659,8 +659,27 @@ void Cmd_erase (char *pcs[]){
     }
 }
 
-void auxDelrec (char *pcs[]) {
+void auxDelrec (char pcs[]) {
+    //treaverse directory
+    //while dir!=NULL next file
+        //try to delete
+        //if not then cd to there
+        //ex auxDelrec there
 
+    struct dirent *de;
+    DIR *dr = opendir(&pcs[0]);
+    if (dr == NULL) {
+        printf("Couldnt open directory. Error number is %d (%s)\n", errno, strerror(errno));
+        return;
+    }
+    while ((de = readdir(dr)) != NULL) {
+        if ( remove(de->d_name) == 0 ) {
+            printf("%s deleted\n", de->d_name);
+            continue;
+        }
+        auxDelrec(de->d_name);
+    }
+    closedir(dr);
 }
 
 void Cmd_delrec (char *pcs[]){
@@ -680,7 +699,7 @@ void Cmd_delrec (char *pcs[]){
             continue;
         }
         printf("Cambie de directorio\n");
-        auxDelrec(&pcs[i]);
+        auxDelrec(pcs[i]);
         chdir(cwd);
     }
 }

@@ -69,8 +69,8 @@ void fPrintList(fList L){
             char sMode[MAX];
             strcpy(sMode, "");
             if (iMode & O_WRONLY) strcpy(sMode, "- O_WRONLY");
-            if (iMode & O_RDWR) strcpy(sMode, "- O_RDWR");
-            if (iMode & O_APPEND) strcpy(sMode, "- O_APPEND");
+            else if (iMode & O_RDWR) strcpy(sMode, "- O_RDWR");
+            else if (iMode & O_APPEND) strcpy(sMode, "- O_APPEND");
 
             printf(" - %d > %s %s\n", item.fileDescriptor, item.fileName, sMode);
             pos = fNext(pos, L);
