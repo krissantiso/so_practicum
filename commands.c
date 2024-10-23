@@ -21,6 +21,208 @@
 #include <grp.h>
 
 
+//Practice 0 commands
+
+void Cmd_authors (char *pcs[]){
+    if ( pcs[0] == NULL ) { //if nothing requested
+        printf("Kris Santiso Sampedro\tkris.santiso@udc.es\nCris\tcorreo.cris@udc.es\n"); //print everything
+    } else if ( strcmp( pcs[0], "-l" ) == 0 ) { //-l asks for mails
+        printf("kris.santiso@udc.es\ncorreo.cris@udc.es\n"); //print mails
+    } else if ( strcmp( pcs[0], "-n" ) == 0) { //-n asks for names
+        printf("Kris Santiso Sampedro\nCris\n"); //print names
+    } else {
+        printf("Invalid argument\n"); //if requested something invalid
+    }
+}
+
+void Cmd_pid (){
+    printf("Process ID: %d\n", getpid()); //process id of current process
+}
+
+void Cmd_ppid (){
+    printf("Parent process ID: %d\n", getppid()); //parent process id of current process
+}
+
+void Cmd_cd (char *pcs[]) {
+    if ( pcs[0]==NULL ) { //if nothing requested
+        char dir[MAX]; //char array to store cwd
+        if (getcwd(dir, sizeof(dir)) != NULL) { //if call succeeds
+            printf("%s\n", dir); //print cwd
+        } else {
+            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno)); //if call fails, prints error
+        }
+    } else { //directory requested
+        if ( chdir(pcs[0]) != 0 ) { //changes dir to path specified
+            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno)); //if it doesn't work, print error
+        }
+    }
+}
+
+void Cmd_date (char *pcs[]) {
+    time_t t;
+    time(&t); //retrieves current time and stores it in t
+
+    struct tm * time = localtime(&t); //changes time retrieved to represent it in local time and store it in time
+
+    if (pcs[0]==NULL) { //if nothing requested
+        printf("%.2d %.2d %.2d\n%.2d:%.2d:%.2d\n", time->tm_mday, time->tm_mon+1, time->tm_year + 1900, time->tm_hour, time->tm_min, time->tm_sec); //print everything
+    } else if ( strcmp( pcs[0], "-d") == 0 ) { //-d asks for date
+        printf("%.2d %.2d %.4d\n", time->tm_mday, time->tm_mon+1, time->tm_year + 1900);
+    } else if ( strcmp( pcs[0], "-t") == 0 ) { //-t asks for time
+        printf("%.2d:%.2d:%.2d\n", time->tm_hour, time->tm_min, time->tm_sec);
+    } else {
+        printf("Invalid argument %s\n", pcs[0]); //if requested something invalid
+    }
+}
+
+void Cmd_historic(char *pcs[]) {
+    int n; //just to store number requested
+
+    if (pcs[0] == NULL) { //if nothing requested
+        hPrintList(hisList); //prints the whole list
+        return;
+    }
+    n = atoi(pcs[0]); //change the number given (char) to an int
+    if (n==0){ //if the number is 0 we cannot print anything
+        printf("Please insert a valid number\n");
+        return;
+    }
+    if (n>0) { //that means the command is historic N
+        char *line; //helps finding the command
+        line = hGetItem(n, hisList); //gets the item in position n
+        if(line==NULL){ //if it is not found
+            printf("There is no command at this position\n");
+            return;
+        }
+        if (breakLine(line,pcs)>0) {
+            DoCommand(pcs); //repeats the command
+        }
+    }else { //just to ensure the number is valid
+        n = abs(atoi(pcs[0])); //makes n positive because of format historic -N
+        hPrintNElems(n, hisList); //prints from last element to the nth element
+        return;
+    }
+}
+
+void Cmd_open (char *pcs[]){
+    if ( pcs[0] == NULL ){ //if nothing requested
+        fPrintList(ofList); //just prints the list of open files
+        return;
+    }
+    fItemL item; //auxiliar to hold file descriptor info
+    int i, df, mode = 0; //i is for iteration, df for file descriptor and mode for open files modes
+
+    for (i=1; pcs[i]!=NULL; i++){ //iterates through argument to check requested modes
+        if (!strcmp(pcs[i],"cr")) mode|=O_CREAT;
+        else if (!strcmp(pcs[i],"ex")) mode|=O_EXCL;
+        else if (!strcmp(pcs[i],"ro")) mode|=O_RDONLY;
+        else if (!strcmp(pcs[i],"wo")) mode|=O_WRONLY;
+        else if (!strcmp(pcs[i],"rw")) mode|=O_RDWR;
+        else if (!strcmp(pcs[i],"ap")) mode|=O_APPEND;
+        else if (!strcmp(pcs[i],"tr")) mode|=O_TRUNC;
+        else break;
+    }
+
+    if ((df=open(pcs[0],mode,0777))==-1) { //tries to open the file with the specified mode and permissions 0777
+        perror ("Impossible to open file"); //if it cannot be opened -> fail
+    } else {
+
+        item.fileDescriptor = df; //store file descriptor
+        strcpy(item.fileName, pcs[0]); //copy file name
+
+        if ( fInsertItem(item, &ofList) ) {
+            printf("Added entry %d to the open files table \n", item.fileDescriptor); //success message
+        } else {
+            printf("There has been an error trying to add the file\n"); //fail message
+        }
+
+    }
+}
+
+void Cmd_close(char *pcs[]){
+    int df; //file descriptor
+    if (pcs[0]==NULL || (df=atoi(pcs[0]))<0) { //if nothing requested or df is invalid
+        printf("Argument invalid or inexistent\n"); //error message
+        return;
+    }
+    if (close(df)==-1) { //tries to close descriptor
+        perror("Impossible to close descriptor"); //prints error
+        return;
+    }
+    if(fIsEmptyList(ofList)) { //if the list of open files is empty
+        printf("There are no open files\n"); //we cannot close a file that is not open
+        return;
+    }
+    fPosL p = fFirst(ofList); //start at the beginning of the list
+    while ( p != NULL ) { //iterate through the list
+        fItemL item = fGetItem(p, ofList); //get the item in position p
+        if (item.fileDescriptor == df) { //if the file descriptor coincide
+            fDeleteAtPosition(p, &ofList); //deletes that position of the list
+            return;
+        }
+        p = fNext(p, ofList); //"increment" the position
+    }
+}
+
+
+void Cmd_dup (char * tr[])
+{
+    int df; //file descriptor
+    char aux[MAX],*p; //aux as a buffer and p is a pointer to file name
+    fPosL pos; //position auxiliar
+    fItemL item1; //auxiliar to find the right file
+    if (tr[0]==NULL || (df=atoi(tr[0]))<0) { //there is no parameter or the descriptor is invalid
+        printf("Argument must be a valid file descriptor\n");
+        return;
+    }
+
+    if ( dup(df) == -1) { //attempts to duplicate the fd
+        printf("Cannot duplicate. Error is number %d (%s)\n", errno, strerror(errno)); //fail message
+        return;
+    }
+
+    pos = fFindItem(df,ofList); //finds item with file descriptor = df
+    item1 = fGetItem(pos, ofList); //gets item in postion pos
+    p = item1.fileName; //stores file name
+    sprintf (aux,"dup %d (%s)",df, p); //prepares entry with that format
+    fItemL item2;
+    strcpy(item2.fileName, aux); //stores the entry in item2
+
+    int descriptor = fLastDescriptor(ofList) + 1; //gets the last fd of the list and adds one, so it will be the new last one
+    item2.fileDescriptor = descriptor;; //assign the previous descriptor to item2
+
+    fInsertItem(item2, &ofList); //insert the dup of the file
+
+    printf("The file has been duplicated\n"); //success message
+}
+
+
+void Cmd_infosys (char *pcs[]) {
+    struct utsname systemUname; //declare a structure utsname to hold the system information such as system name, node name, release, version, and machine type
+    if( uname(&systemUname) < 0 ) { //calls uname to get system info and store it in systemUname
+        perror("uname"); //if it fails, print error message
+    } else { //print system information
+        printf("System name: %s\nNodename: %s\nRelease: %s\nVersion: %s\nMachine: %s\n",
+            systemUname.sysname /*name of OS*/, systemUname.nodename /*name of the machine within the network (hostname)*/,
+            systemUname.release /*OS release (e.g., kernel version)*/,systemUname.version /*specific version of OS*/,
+            systemUname.machine /*hardware type (architecture)*/);
+    }
+}
+
+void Cmd_quit (char *pcs[]){
+    if ( !fIsEmptyList(ofList)) { //if the list of files is not empty
+        fClearList(&ofList); //clear the list before exiting
+    }
+    if ( !hIsEmptyList(hisList)) { //if the historic list is not empty
+        hClearList(&hisList); //clear list
+    }
+    exit(0); //the program is terminating successfully
+}
+
+
+
+//Practice 1 commands
+
 char LetraTF(mode_t m) {
     switch (m & S_IFMT) {
         case S_IFSOCK: return 's'; //checks if it is a socket
@@ -137,7 +339,7 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                 }
                 ConvierteModo(buffer.st_mode, perm); //converts mode to permissions
                 printf(" %2d (%8d) %8s %8s %14s %6d %s",
-                print_hardlinks(buffer), print_inoden(buffer),
+                       print_hardlinks(buffer), print_inoden(buffer),
                        print_owner(buffer), print_group(buffer),
                        perm, print_size(buffer), fName); //print all info
                 free(perm); //free memory allocated for permissions
@@ -231,207 +433,6 @@ void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isR
         }
     }
 }
-
-void Cmd_authors (char *pcs[]){
-    if ( pcs[0] == NULL ) {
-        printf("Kris Santiso Sampedro\tkris.santiso@udc.es\nCris\tcorreo.cris@udc.es\n");
-    } else if ( strcmp( pcs[0], "-l" ) == 0 ) {
-        printf("kris.santiso@udc.es\ncorreo.cris@udc.es\n");
-    } else if ( strcmp( pcs[0], "-n" ) == 0) {
-        printf("Kris Santiso Sampedro\nCris\n");
-    } else {
-        printf("Invalid argument\n");
-    }
-}
-
-void Cmd_pid (){
-    printf("Process ID: %d\n", getpid());
-}
-
-void Cmd_ppid (){
-    printf("Parent process ID: %d\n", getppid());
-}
-
-void Cmd_cd (char *pcs[]) {
-    if ( pcs[0]==NULL ) {
-        char dir[MAX];
-        if (getcwd(dir, sizeof(dir)) != NULL) {
-            printf("%s\n", dir);
-        } else {
-            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno));
-        }
-    } else {
-        if ( chdir(pcs[0]) != 0 ) {
-            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno));
-        }
-    }
-}
-
-void Cmd_date (char *pcs[]) {
-    time_t t;
-    time(&t);
-
-    struct tm * time = localtime(&t);
-
-    if (pcs[0]==NULL) {
-        printf("%.2d %.2d %.2d\n%.2d:%.2d:%.2d\n", time->tm_mday, time->tm_mon+1, time->tm_year + 1900, time->tm_hour, time->tm_min, time->tm_sec);
-    } else if ( strcmp( pcs[0], "-d") == 0 ) {
-        printf("%.2d %.2d %.4d\n", time->tm_mday, time->tm_mon+1, time->tm_year + 1900);
-    } else if ( strcmp( pcs[0], "-t") == 0 ) {
-        printf("%.2d:%.2d:%.2d\n", time->tm_hour, time->tm_min, time->tm_sec);
-    } else {
-        printf("Invalid argument %s\n", pcs[0]);
-    }
-}
-
-
-//me gusto mas mi funcion asi q la use y ya :p
-void Cmd_historic(char *pcs[]) {
-    int n;
-
-    if (pcs[0] == NULL) {
-        hPrintList(hisList);
-        return;
-    }
-    n = atoi(pcs[0]);
-    if (n==0){
-        printf("Please insert a valid number\n");
-        return;
-    }
-    if (n>0) {
-        char *line; //helps finding the command
-        line = hGetItem(n, hisList);
-        if(line==NULL){
-            printf("There is no command at this position\n");
-            return;
-        }
-        if (breakLine(line,pcs)>0) {
-            DoCommand(pcs);
-        }
-    }else { //just to ensure the number is valid
-        n = abs(atoi(pcs[0]));
-        hPrintNElems(n, hisList);
-        return;
-    }
-}
-
-void Cmd_open (char *pcs[]){
-    if ( pcs[0] == NULL ){
-        fPrintList(ofList);
-        return;
-    }
-    fItemL item;
-    int i, df, mode = 0;
-
-    for (i=1; pcs[i]!=NULL; i++){
-        if (!strcmp(pcs[i],"cr")) mode|=O_CREAT;
-        else if (!strcmp(pcs[i],"ex")) mode|=O_EXCL;
-        else if (!strcmp(pcs[i],"ro")) mode|=O_RDONLY;
-        else if (!strcmp(pcs[i],"wo")) mode|=O_WRONLY;
-        else if (!strcmp(pcs[i],"rw")) mode|=O_RDWR;
-        else if (!strcmp(pcs[i],"ap")) mode|=O_APPEND;
-        else if (!strcmp(pcs[i],"tr")) mode|=O_TRUNC;
-        else break;
-    }
-
-    if ((df=open(pcs[0],mode,0777))==-1) {
-        perror ("Impossible to open file");
-    } else {
-
-        item.fileDescriptor = df;
-        strcpy(item.fileName, pcs[0]);
-
-        if ( fInsertItem(item, &ofList) ) {
-            printf("Added entry %d to the open files table \n", item.fileDescriptor);
-        } else {
-            printf("There has been an error trying to add the file\n");
-        }
-
-    }
-}
-
-void Cmd_close(char *pcs[]){
-    int df;
-    if (pcs[0]==NULL || (df=atoi(pcs[0]))<0) {
-        printf("Argument invalid or inexistent\n");
-        return;
-    }
-    if (close(df)==-1) {
-        perror("Inposible cerrar descriptor");
-        return;
-    }
-    if(fIsEmptyList(ofList)) {
-        printf("There are no open files\n");
-        return;
-    }
-    fPosL p = fFirst(ofList);
-    while ( p != NULL ) {
-        fItemL item = fGetItem(p, ofList);
-        if (item.fileDescriptor == df) {
-            fDeleteAtPosition(p, &ofList);
-            return;
-        }
-        p = fNext(p, ofList);
-    }
-}
-
-//Function not checked
-void Cmd_dup (char * tr[])
-{
-    int df;
-    char aux[MAX],*p;
-    fPosL pos;
-    fItemL item1; //auxiliar to find the right file
-    if (tr[0]==NULL || (df=atoi(tr[0]))<0) { //there is no parameter or the descriptor is less than 0
-        printf("Argument must be a valid file descriptor\n");
-        return;
-    }
-
-    if ( dup(df) == -1) {
-        printf("Cannot duplicate. Error is number %d (%s)\n", errno, strerror(errno));
-        return;
-    }
-
-    pos = fFindItem(df,ofList);
-    item1 = fGetItem(pos, ofList);
-    p = item1.fileName;
-    sprintf (aux,"dup %d (%s)",df, p);
-    fItemL item2;
-    strcpy(item2.fileName, aux);
-
-    int descriptor = fLastDescriptor(ofList) + 1;
-    item2.fileDescriptor = descriptor;;
-
-    fInsertItem(item2, &ofList);
-
-    printf("The file has been duplicated\n");
-}
-
-
-void Cmd_infosys (char *pcs[]) {
-    struct utsname systemUname;
-    if( uname(&systemUname) < 0 ) {
-        perror("uname");
-    } else {
-        printf("System name: %s\nNodename: %s\nRelease: %s\nVersion: %s\nMachine: %s\n",
-            systemUname.sysname, systemUname.nodename, systemUname.release, systemUname.version, systemUname.machine);
-    }
-}
-
-void Cmd_quit (char *pcs[]){
-    if ( !fIsEmptyList(ofList)) {
-        fClearList(&ofList);
-    }
-    if ( !hIsEmptyList(hisList)) {
-        hClearList(&hisList);
-    }
-    exit(0); //the program is terminating successfully
-}
-
-
-
-//Practice 1 commands
-
 
 void Cmd_cwd (char *pcs[]){
     char dir[MAX];
