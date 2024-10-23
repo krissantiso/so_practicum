@@ -203,9 +203,6 @@ void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
 
 void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isRec, int isRev){
 
-    if(!isHid && fName[0] == '.')
-        return;
-
     char dir[MAX];
     getcwd(dir, MAX);
     struct stat buffer;
@@ -442,7 +439,7 @@ void Cmd_close(char *pcs[]){
 //Function not checked
 void Cmd_dup (char * tr[])
 {
-    int df, dupli;
+    int df;
     char aux[MAX],*p;
     fPosL pos;
     fItemL item1; //auxiliar to find the right file
@@ -451,7 +448,6 @@ void Cmd_dup (char * tr[])
         return;
     }
 
-    dupli = dup(df);
     pos = fFindItem(df,ofList);
     item1 = fGetItem(pos, ofList);
     p = item1.fileName;
