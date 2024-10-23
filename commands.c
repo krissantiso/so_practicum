@@ -395,16 +395,20 @@ void Cmd_close(char *pcs[]){
 //Function not checked
 void Cmd_dup (char * tr[])
 {
-    int df, duplicate;
+    int df;
     char aux[MAX],*p;
     fPosL pos;
     fItemL item1; //auxiliar to find the right file
     if (tr[0]==NULL || (df=atoi(tr[0]))<0) { //there is no parameter or the descriptor is less than 0
-        fPrintList(ofList);
+        printf("Argument must be a valid file descriptor\n");
         return;
     }
 
-    duplicate=dup(df);
+    if ( dup(df) == -1) {
+        printf("Cannot duplicate. Error is number %d (%s)\n", errno, strerror(errno));
+        return;
+    }
+
     pos = fFindItem(df,ofList);
     item1 = fGetItem(pos, ofList);
     p = item1.fileName;
