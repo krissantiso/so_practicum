@@ -659,25 +659,36 @@ void Cmd_erase (char *pcs[]){
     }
 }
 
-void auxDelrec (char pcs[]) {
+void auxDelrec (char dir[]) {
     //treaverse directory
     //while dir!=NULL next file
         //try to delete
         //if not then cd to there
         //ex auxDelrec there
-
     struct dirent *de;
-    DIR *dr = opendir(&pcs[0]);
+    DIR *dr = opendir(".");
     if (dr == NULL) {
-        printf("Couldnt open directory. Error number is %d (%s)\n", errno, strerror(errno));
+        printf("Couldnt open directory %s. Error number is %d (%s)\n", dir, errno, strerror(errno));
         return;
     }
     while ((de = readdir(dr)) != NULL) {
+        if (de->d_name[0] == '.' && (de->d_name[1] == '\0' || de->d_name[1] == '.')) {
+            continue;
+        }
+        printf("im in %s before removing\n", de->d_name);
         if ( remove(de->d_name) == 0 ) {
             printf("%s deleted\n", de->d_name);
             continue;
         }
+        printf("im going to %s\n", de->d_name);
+        chdir(de->d_name);
         auxDelrec(de->d_name);
+        printf("i delted %s contents\n", de->d_name);
+        if ( remove(de->d_name) == 0 ) {
+            printf("%s deleted\n", de->d_name);
+            continue;
+        }
+        printf("why couldnt i delete %s\n", de->d_name);
     }
     closedir(dr);
 }
@@ -699,7 +710,13 @@ void Cmd_delrec (char *pcs[]){
             continue;
         }
         printf("Cambie de directorio\n");
-        auxDelrec(pcs[i]);
+        char dir[MAX];
+        strcpy(dir, pcs[i]);
+        auxDelrec(dir);
+        if ( remove(pcs[i]) == 0 ) {
+            printf("%s deleted\n", pcs[i]);
+            continue;
+        }
         chdir(cwd);
     }
 }
