@@ -478,14 +478,6 @@ void Cmd_infosys (char *pcs[]) {
     }
 }
 
-
-
-
-
-
-
-
-
 void Cmd_quit (char *pcs[]){
     if ( !fIsEmptyList(ofList)) {
         fClearList(&ofList);
@@ -665,10 +657,15 @@ void Cmd_erase (char *pcs[]){
         if (remove(pcs[i]) != 0 ) {
             printf("Cannot delete %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
         } else {
-            printf("File %s removed\n", pcs[i]);
+            printf("%s removed\n", pcs[i]);
         }
     }
 }
+
+void auxDelrec (char *pcs[]) {
+
+}
+
 void Cmd_delrec (char *pcs[]){
     if (pcs[0]==NULL){
         printf("The name of the directory must be especified\n");
@@ -677,8 +674,16 @@ void Cmd_delrec (char *pcs[]){
     char cwd[MAX];
     strcpy(cwd, getcwd(cwd, MAX));
     for ( int i = 0; pcs[i] != NULL; i++) {
-        chdir(pcs[i]);
+        if ( remove(pcs[i]) == 0 ) {
+            printf("%s deleted\n", pcs[i]);
+            continue;
+        }
+        if ( chdir(pcs[i]) != 0 ) {
+            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno));
+            continue;
+        }
         printf("Cambie de directorio\n");
+        auxDelrec(&pcs[i]);
         chdir(cwd);
     }
 }
