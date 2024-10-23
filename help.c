@@ -1,7 +1,3 @@
-//
-// Created by kris on 10/23/24.
-//
-
 #include "help.h"
 #include <stdio.h>
 #include <string.h>
@@ -18,19 +14,31 @@ void helpAuthors(char *pcs[]) {
     } else {
         printf("Invalid argument %s\n", pcs[0]);
     }
-
 }
 
 void helpPID (char *pcs[]) {
-    printf("pid: Prints the pid of the process executing the shell\n");
+    if ( pcs[0]==NULL ) {
+        printf("pid: Prints the pid of the process executing the shell\n");
+    } else {
+        printf("Invalid argument %s",pcs[0]);
+    }
 }
 
 void helpPPID (char *pcs[]) {
-    printf("ppid: Prints the pid of the shell’s parent process.\n");
+    if ( pcs[0]==NULL ) {
+        printf("ppid: Prints the pid of the shell’s parent process.\n");
+    } else {
+        printf("Invalid argument %s",pcs[0]);
+    }
 }
 
 void helpCd (char *pcs[]) {
-    printf("cd [dir]: Changes the current working directory of the shell to dir (using the chdir system call). When invoked without auguments it prints the current working directory (using the getcwd system call.\n");
+    if ( pcs[0]==NULL ) {
+        printf("cd [dir]: Changes the current working directory of the shell to dir (using the chdir system call)."
+            "\tWhen invoked without auguments it prints the current working directory (using the getcwd system call.\n");
+    } else {
+        printf("Invalid argument %s",pcs[0]);
+    }
 }
 
 void helpDate (char *pcs[]) {
@@ -65,49 +73,84 @@ void helpHistoric (char *pcs[]) {
 }
 
 void helpOpen (char *pcs[]) {
-    printf("open [file] mode: Opens a file and adds it to the list of shell open files\n");
-    printf("Open without arguments lists the shell open files\n");
+    if (pcs[0]==NULL) {
+        printf("open [file] mode: Opens a file and adds it to the list of shell open files\n");
+        printf("\tOpen without arguments lists the shell open files\n");
+    } else {
+        printf("Invalid argument %s",pcs[0]);
+    }
 }
 
 void helpClose (char *pcs[]) {
-    printf("close [df]: Closes the df file descriptor and eliminates the corresponding item from the list\n");
+    if (pcs[0]==NULL) {
+        printf("close [df]: Closes the df file descriptor and eliminates the corresponding item from the list\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpDup (char *pcs[]) {
-    printf("dup [df]: Duplicates the df file descriptor (using the dup system call, creating the corresponding new entry on the file list\n");
+    if (pcs[0]==NULL) {
+        printf("dup [df]: Duplicates the df file descriptor (using the dup system call, creating the corresponding new entry on the file list\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpInfoSys (char *pcs[]) {
-    printf("infosys: Prints information on the machine running the shell\n");
+    if (pcs[0]==NULL) {
+        printf("infosys: Prints information on the machine running the shell\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpHelp (char *pcs[]) {
-    printf("help [cmd]: help displays a list of available commands. help cmd gives a brief help on the usage of comand cmd\n");
+    if (pcs[0]==NULL) {
+        printf("help [cmd]: help displays a list of available commands. help cmd gives a brief help on the usage of comand cmd\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpQuit (char *pcs[]) {
-    printf("quit: Ends the shell\n");
+    if (pcs[0]==NULL) {
+        printf("quit: Ends the shell\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpExit (char *pcs[]) {
-    printf("exit: Ends the shell\n");
+    if (pcs[0]==NULL) {
+        printf("exit: Ends the shell\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpBye (char *pcs[]) {
-    printf("bye: Ends the shell\n");
-}
-
-void helpCommands (char *pcs[]) {
-    printf("authors - pid - ppid - cd - date - historic - open - close - dup - infosys - help - quit - exit - bye"
-		" - makefile - makedir - listfile - cwd - listdir - reclist - revlist - erase - delrec\n");
+    if (pcs[0]==NULL) {
+        printf("bye: Ends the shell\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpMakefile (char *pcs[]) {
-	printf("makefile [name]: creates a file named name\n");
+	if (pcs[0]==NULL) {
+        printf("makefile [name]: creates a file named name\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpMakedir (char *pcs[]) {
-	printf("makedir [name]: creates a directory named name\n");
+    if (pcs[0]==NULL) {
+        printf("makedir [name]: creates a directory named name\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpListfile (char *pcs[]) {
@@ -128,7 +171,11 @@ void helpListfile (char *pcs[]) {
 }
 
 void helpCwd (char *pcs[]) {
-	printf("cwd: list actual shell directory\n");
+    if (pcs[0]==NULL) {
+        printf("cwd: list actual shell directory\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpListdir (char *pcs[]) {
@@ -192,11 +239,24 @@ void helpRevlist (char *pcs[]) {
 }
 
 void helpErase (char *pcs[]) {
-	printf("erase [n1 n2 ...]: Deletes empty files or directories\n");
+    if (pcs[0]==NULL) {
+	    printf("erase [n1 n2 ...]: Deletes files or empty directories\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
 }
 
 void helpDelrec (char *pcs[]) {
-	printf("delrec [n1 n2 ...]: Deletes non empty files or directories recursively\n");
+    if (pcs[0]==NULL) {
+	    printf("delrec [n1 n2 ...]: Deletes files or non empty directories recursively\n");
+    } else {
+        printf("Invalid argument %s\n", pcs[0]);
+    }
+}
+
+void helpCommands (char *pcs[]) {
+    printf("authors - pid - ppid - cd - date - historic - open - close - dup - infosys - help - quit - exit - bye"
+        " - makefile - makedir - listfile - cwd - listdir - reclist - revlist - erase - delrec\n");
 }
 
 struct command h[]={

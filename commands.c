@@ -629,7 +629,6 @@ void auxDel (char *path) {
         if ( remove(newDir) != 0 ) {
             auxDel(newDir);
         }
-
     }
     closedir(dr);
     if ( remove(path) != 0 ) {

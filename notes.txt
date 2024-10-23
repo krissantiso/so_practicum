@@ -1,7 +1,7 @@
+Reference shell errors:
 close a - infinite loop
+delrec ../.. - makes everything not work until u go back enough with cd ../..
 
 date doesnt work xd - added 1 to all month calls so it works (ask if it starts at 0)
-
-change help for listfile
 
 reclist and revlist only print one directory contents like listdir and not subdirectories
