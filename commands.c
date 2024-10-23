@@ -102,9 +102,9 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
         if (lstat(fName, &buffer) != 0) { //get file information
             printf("It is not possible to access %s: %s\n", fName, strerror(errno)); //error if lstat fails
         } else {
-            if (!isLong) {
-                printf("%d ", print_size(buffer));
-                if (isAcc) {
+            if (!isLong) { //if long not requested
+                printf("%d ", print_size(buffer)); //just print size
+                if (isAcc) { //if access time requested
                     print_accesstime(buffer);
                 }
                 printf("%s", fName);
@@ -367,50 +367,6 @@ void Cmd_open (char *pcs[]){
     }
 }
 
-/*
- * void Cmd_makefile (char *tr[]){
- *  int df;
- *  if (tr[0]==NULL){
- *      lkjdslkjas
- *      return;
-*   }
- *  if ((df=open(tr[0], O_CREAT|O_EXCL, 0777))==-1){
- *      mnt emur ------
- *      return;
- *  }
- *  close(df);
- * }
- *
- *
- *
- * Cmd_listfile(){
- * int l, islong, islnk, isacc;
- * islong=islnk=isacc=0;
- * for (i=0; tr[i]!=NULL;i++){
- *  if(!strcmp(tr[i], "-long") islong=1;
- *  else
- *  .
- *  .
- *  .
- *  else break
- * }
- *  for(;tr[i]!=NULL;i++){
- *      fileInfo(tr[i],islong,islnk,isacc);
- *  }
- * }
- *
- *
- * fileInfo(ch *file, int islong, int islnk, int isacc){
- *  struct stat s;
- *      if(lstat(file, &s)==-1){
- *          ldakjf
- *          return;
- *      }
- *      if(!ishid){
- *
- * }
- */
-
 void Cmd_close(char *pcs[]){
     int df;
     if (pcs[0]==NULL || (df=atoi(pcs[0]))<0) {
@@ -439,7 +395,7 @@ void Cmd_close(char *pcs[]){
 //Function not checked
 void Cmd_dup (char * tr[])
 {
-    int df;
+    int df, duplicate;
     char aux[MAX],*p;
     fPosL pos;
     fItemL item1; //auxiliar to find the right file
@@ -448,6 +404,7 @@ void Cmd_dup (char * tr[])
         return;
     }
 
+    duplicate=dup(df);
     pos = fFindItem(df,ofList);
     item1 = fGetItem(pos, ofList);
     p = item1.fileName;
