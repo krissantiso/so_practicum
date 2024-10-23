@@ -105,34 +105,34 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
             if (!isLong) { //if long not requested
                 printf("%d ", print_size(buffer)); //just print size
                 if (isAcc) { //if access time requested
-                    print_accesstime(buffer);
+                    print_accesstime(buffer); //prints acc.time
                 }
-                printf("%s", fName);
-                if (isLink) {
-                    if (LetraTF(buffer.st_mode) == 'l') {
-                        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
+                printf("%s", fName); //also print file name
+                if (isLink) { //if link requested
+                    if (LetraTF(buffer.st_mode) == 'l') { //checks if the file is a symbolic link
+                        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1); //readlink reads the target of the link
                         if (len != -1) {
-                            toLink[len] = '\0';  // Null-terminate the string
-                            if (S_ISLNK(buffer.st_mode)) {
-                                printf(" -> %s", toLink);
+                            toLink[len] = '\0';  // null-terminate the string
+                            if (S_ISLNK(buffer.st_mode)) { //check again if the file is a symbolic link
+                                printf(" -> %s", toLink); //print link target
                             } else {
-                                printf("\n");
+                                printf("\n"); //if it is not a symb.link just prints new line
                             }
                         } else {
-                            printf("Error reading link for %s: %s", fName, strerror(errno));
+                            printf("Error reading link for %s: %s", fName, strerror(errno)); //if readlink fails
                         }
                     }
                 }
                 printf("\n");
-            } else {
-                if (isAcc) {
-                    print_accesstime(buffer);
+            } else { //if long requested
+                if (isAcc) { //if access time requested
+                    print_accesstime(buffer); //prints acc.time
                 } else {
-                    print_crtime(buffer);
+                    print_crtime(buffer); //prints creation or modification time
                 }
                 perm = (char *)malloc(12); //allocate mem for permissions
                 if (perm == NULL) { //if allocation fails
-                    fprintf(stderr, "Memory allocation failed\n");
+                    fprintf(stderr, "Memory allocation failed\n"); //print error message
                     return;  // Handle allocation failure
                 }
                 ConvierteModo(buffer.st_mode, perm); //converts mode to permissions
@@ -140,9 +140,9 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                 print_hardlinks(buffer), print_inoden(buffer),
                        print_owner(buffer), print_group(buffer),
                        perm, print_size(buffer), fName); //print all info
-                free(perm);
-                if (isLink) {
-                    if (LetraTF(buffer.st_mode) == 'l') {
+                free(perm); //free memory allocated for permissions
+                if (isLink) { //if link is requested
+                    if (LetraTF(buffer.st_mode) == 'l') { //same as before
                         ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
                         if (len != -1) {
                             toLink[len] = '\0';  // Null-terminate the string
@@ -166,43 +166,40 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
 
 void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
     char dir[MAX];
-    getcwd(dir, MAX);
+    getcwd(dir, MAX); //get cwd and store it in dir
     struct stat buffer;
     struct stat buffer2;
     DIR * dirc;
     struct dirent *ent;
 
-    if(lstat(dirName, &buffer) == -1)
-        printf("It is not possible to access %s: %s\n", dirName, strerror(errno));
-    else if (!S_ISREG(buffer.st_mode) && !S_ISLNK(buffer.st_mode)){
-        if ((dirc = opendir(dirName)) == NULL)
-            printf("It is not possible to access %s: %s\n", dirName, strerror(errno));
+    if(lstat(dirName, &buffer) == -1) //get info about the directory
+        printf("It is not possible to access %s: %s\n", dirName, strerror(errno)); //if lstat fails
+    else if (!S_ISREG(buffer.st_mode) && !S_ISLNK(buffer.st_mode)){ //if it is neither a regular file nor symb.link
+        if ((dirc = opendir(dirName)) == NULL) //try to open directory
+            printf("It is not possible to access %s: %s\n", dirName, strerror(errno)); //if it can't be opened
         else{
-            if (chdir(dirName) == -1) {
-                printf("Cannot change to directory %s: %s\n", dirName, strerror(errno));
-                closedir(dirc);
+            if (chdir(dirName) == -1) { //change to target directory
+                printf("Cannot change to directory %s: %s\n", dirName, strerror(errno)); //error if failed to change
+                closedir(dirc); //then close the directory
                 return;
             }
 
-            printf("** %s **\n", dirName);
+            printf("** %s **\n", dirName); //print the directory name
 
-            while ((ent = readdir (dirc)) != NULL){
+            while ((ent = readdir (dirc)) != NULL){ //with this loop we will read each entry in the directory
 
-                lstat(ent->d_name, &buffer2);
-                if(isHid) {
-                    printFile(ent->d_name, isLong, isLink, isAcc, isHid);
-                } else if(ent->d_name[0] != '.') {
-                    printFile(ent->d_name, isLong, isLink, isAcc, isHid);
-                }
+                lstat(ent->d_name, &buffer2); //get info for each entry
+                printFile(ent->d_name, isLong, isLink, isAcc, isHid); //prints info of entry
+
             }
-            closedir(dirc);
+            closedir(dirc); //close the directory
         }
-        chdir(dir);
+        chdir(dir); //change back to cwd
     }
 }
 
 void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isRec, int isRev){
-
+    //everything is the same as in printLISTDIR except for the prints
     char dir[MAX];
     getcwd(dir, MAX);
     struct stat buffer;
@@ -217,13 +214,13 @@ void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isR
                 chdir(fName);
                 while ((ent = readdir (dirc)) != NULL){
                     if(strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")){
-                        if(isRev){
-                            printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev);
-                            printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid);
+                        if(isRev){ //reverse recursive requested
+                            printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev); //recursion first
+                            printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid); //list directory
                         }
                         else{
-                            printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid);
-                            printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev);
+                            printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid); //list directory
+                            printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev); //then recursion
 
                         }
                     }
@@ -287,20 +284,6 @@ void Cmd_date (char *pcs[]) {
     }
 }
 
-void execHistoric (int num, char *pcs[]) {
-    if (num == 0) {
-        printf("Please insert a valid number\n");
-        return;
-    }
-    char *line = hGetItem(num, hisList);
-    if(line==NULL){
-        printf("There is no command at this position\n");
-        return;
-    }
-    if (breakLine(line,pcs)>0) {
-        DoCommand(pcs);
-    }
-}
 
 //me gusto mas mi funcion asi q la use y ya :p
 void Cmd_historic(char *pcs[]) {
