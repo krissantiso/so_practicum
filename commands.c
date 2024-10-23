@@ -286,8 +286,8 @@ void print_accesstime(struct stat buffer){
 char *print_owner(struct stat buffer) {
     int owner = buffer.st_uid; //gets owner's user ID
     struct passwd *pw = getpwuid(owner); //looks up user info
-    return (pw == NULL) ? "???????" : pw->pw_name; //if couldn't access to info, prints the user as unknown (???)
-    //otherwise prints user name
+    return (pw == NULL) ? "???????" : pw->pw_name; //if it couldn't access to info, prints the user as unknown (???)
+    //otherwise prints username
 }
 
 char *print_group(struct stat buffer) { //same as print_owner but with group
@@ -435,62 +435,75 @@ void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isR
 }
 
 void Cmd_cwd (char *pcs[]){
-    char dir[MAX];
-    if (pcs[0]==NULL) printf("%s\n", getcwd(dir,MAX));
+    char dir[MAX]; //char array to store path of current directory
+    if (pcs[0]==NULL){
+        if (getcwd(dir,MAX)!=NULL) { //gets cwd
+            printf("%s\n", getcwd(dir, MAX)); //if succeeds, print dir path
+        }else {
+            perror("Error getting current working directory"); //print error message if getcwd fails
+        }
+    }
+    else printf("Invalid argument to this command\n"); //prints error message
 }
 
 void Cmd_makefile (char *pcs[]){
-    if (pcs[0]==NULL) {
-        printf("The name of the file needs to be provided\n");
+    if (pcs[0]==NULL) { //if no name provided
+        printf("The name of the file needs to be provided\n"); //prints fail message
         return;
     }
     int df = open(pcs[0], O_CREAT|O_TRUNC|O_WRONLY|O_EXCL, 0777);
-    if ( df == -1 ) {
-		printf("Cannot create. Error number is %d (%s)\n", errno, strerror(errno));
+    //attempts to create a new file with the name provided using the open() system call
+    /*O_CREAT: creates the file if it doesn't exist
+     *O_TRUNC: if the file exists, truncate its size to 0
+     *O_WRONLY: open for write-only mode
+     *O_EXCL: ensures that the call fails if the file already exists */
+
+    if ( df == -1 ) { //checks if open failed
+		printf("Cannot create. Error number is %d (%s)\n", errno, strerror(errno)); //error message
         return;
     }
-    printf("%s was created\n", pcs[0]);
-    close(df);
+    printf("%s was created\n", pcs[0]); //success message
+    close(df); //closes fd to ensure resources are properly released
 }
 
 void Cmd_makedir (char *pcs[]){
-	if (pcs[0]==NULL) {
-        printf("The name of the directory needs to be provided\n");
+	if (pcs[0]==NULL) { //if no name provided
+        printf("The name of the directory needs to be provided\n"); //prints fail message
         return;
     }
-    int ok = mkdir(pcs[0], 0777);
-	if ( ok != 0 ) {
-    	printf("Cannot create. Error number is %d (%s)\n", errno, strerror(errno));
+    int ok = mkdir(pcs[0], 0777); //0 if success, non-zero if fail
+    //attempt to create a new directory with the name provided
+    //0777: read, write, and execute permissions for everyone
+	if ( ok != 0 ) { //if it failed
+    	printf("Cannot create. Error number is %d (%s)\n", errno, strerror(errno)); //error message
         return;
 	}
-    printf("%s was created\n", pcs[0]);
+    printf("%s was created\n", pcs[0]); //success message
 }
 
 void Cmd_listfile (char *pcs[]){
 
-    if (pcs[0]==NULL) {
-        printf("The name of the directory needs to be provided\n");
+    if (pcs[0]==NULL) { //checks if the name is not provided
+        printf("The name of the directory or file needs to be provided\n"); //error message
         return;
     }
-    int isLong=0, isLink=0, isAcc=0, i;
+    int isLong=0, isLink=0, isAcc=0, i; //flags initialized to 0
 
-    for ( i = 0; pcs[i] != NULL; i++) {
+    for ( i = 0; pcs[i] != NULL; i++) { //checks for options through the command
     	if (strcmp(pcs[i], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[i], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[i], "-acc") == 0) isAcc = 1;
-        else break; //i is the name location
+        else break; //i is word position
     }
 
-    for (i = i; pcs[i] != NULL; i++) {
-    	struct stat stats;
-    	if ( lstat(pcs[i], &stats) == 0) {
-            printFile(pcs[i], isLong, isLink, isAcc, 1);
-   		}else {
-            printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+    for (i = i; pcs[i] != NULL; i++) { //iterates through different files
+    	struct stat stats; //auxiliary to hold file info
+    	if ( lstat(pcs[i], &stats) == 0) { //get file info and store it in stats
+            printFile(pcs[i], isLong, isLink, isAcc, 1); //print file info
+   		}else { //if lstat fails
+            printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno)); //error message
    		}
     }
-
-
 }
 
 void Cmd_listdir(char *pcs[]) {
@@ -541,7 +554,7 @@ void Cmd_reclist (char *pcs[]){
         else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
-        else break; //i is the name location
+        else break; //i: position of arguments
     }
 
     for (i = j; pcs[i] != NULL; i++) {

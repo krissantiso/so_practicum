@@ -4,3 +4,7 @@ delrec ../.. - makes everything not work until u go back enough with cd ../..
 
 Solved weirdly:
 date doesnt work xd - added 1 to all month calls so it works (ask if it starts at 0)
+
+
+DOUBTS:
+ask teacher if in listfile we print an error for no name provided or print cwd
