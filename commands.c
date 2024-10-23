@@ -889,8 +889,28 @@ void Cmd_revlist (char *pcs[]){
     }
 }
 void Cmd_erase (char *pcs[]){
-
+    if (pcs[0]==NULL){
+        printf("The name of the file or directory must be especified");
+        return;
+    }
+    for ( int i = 0; pcs[i] != NULL; i++) {
+        if (remove(pcs[i]) != 0 ) {
+            printf("Cannot delete %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+        } else {
+            printf("File %s removed\n", pcs[i]);
+        }
+    }
 }
 void Cmd_delrec (char *pcs[]){
-
+    if (pcs[0]==NULL){
+        printf("The name of the directory must be especified\n");
+        return;
+    }
+    char cwd[MAX];
+    strcpy(cwd, getcwd(cwd, MAX));
+    for ( int i = 0; pcs[i] != NULL; i++) {
+        chdir(pcs[i]);
+        printf("Cambie de directorio\n");
+        chdir(cwd);
+    }
 }
