@@ -19,7 +19,6 @@ void Cmd_open (char * pcs[]);
 void Cmd_close (char *tr[]);
 void Cmd_dup (char * tr[]);
 void Cmd_infosys (char *pcs[]);
-void Cmd_help (char *pcs[]);
 void Cmd_quit (char *pcs[]);
 int breakLine (char *lin, char *pz[]);
 void DoCommand (char *pcs[]);

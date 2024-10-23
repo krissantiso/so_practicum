@@ -1,6 +1,7 @@
 #include "commands.h"
 #include "historicList.h"
 #include "fileList.h"
+#include "help.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
