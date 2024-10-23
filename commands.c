@@ -180,7 +180,7 @@ void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
         else{
             if (chdir(dirName) == -1) {
                 printf("Cannot change to directory %s: %s\n", dirName, strerror(errno));
-                closedir(dir);
+                closedir(dirc);
                 return;
             }
 
@@ -442,7 +442,7 @@ void Cmd_close(char *pcs[]){
 //Function not checked
 void Cmd_dup (char * tr[])
 {
-    int df, duplicado;
+    int df, dupli;
     char aux[MAX],*p;
     fPosL pos;
     fItemL item1; //auxiliar to find the right file
@@ -451,7 +451,7 @@ void Cmd_dup (char * tr[])
         return;
     }
 
-    duplicado = dup(df);
+    dupli = dup(df);
     pos = fFindItem(df,ofList);
     item1 = fGetItem(pos, ofList);
     p = item1.fileName;
@@ -553,10 +553,9 @@ void Cmd_listfile (char *pcs[]){
 }
 
 void Cmd_listdir(char *pcs[]) {
-    char dir[MAX];
     int i,j;
     int isLong, isAcc , isHid , isLink;
-    isLong=isAcc=isHid=isLink;
+    isLong=isAcc=isHid=isLink=0;
 
     if (pcs[0]==NULL){
         Cmd_cwd(pcs);
@@ -586,7 +585,6 @@ void Cmd_listdir(char *pcs[]) {
 
 
 void Cmd_reclist (char *pcs[]){
-    char dir[MAX];
     int i,j;
     int isLong, isAcc , isHid , isLink, isRec, isRev;
     isRec=1;
@@ -618,7 +616,6 @@ void Cmd_reclist (char *pcs[]){
     }
 }
 void Cmd_revlist (char *pcs[]){
-    char dir[MAX];
     int i,j;
     int isLong, isAcc , isHid , isLink, isRec, isRev;
     isRev=1;
