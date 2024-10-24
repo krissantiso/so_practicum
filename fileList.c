@@ -158,8 +158,8 @@ fPosL fDeleteAtPosition (fPosL p, fList* L){
         p->next = q->next;
         p = q; //get rid of the node that used to be right after p
     }
-    return p;
     free(p);
+    return p;
 }
 
 void fClearList (fList *L){
