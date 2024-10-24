@@ -406,12 +406,15 @@ void printREC(char *fName, int isLong, int isLink, int isAcc, int isHid, int isR
             if ((dirc = opendir(fName)) != NULL){
                 chdir(fName);
                 while ((ent = readdir (dirc)) != NULL){
-                    if(strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")){
-                        if(isRev){ //reverse recursive requested
+                    if(strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0){//ensure that we skip listing dirs . and .. in the recursion
+                        if (ent->d_name[0] == '.' && !isHid) {
+                            continue;  // skip hidden subdirectories if -hid was not requested
+                        }
+
+                        if (isRev) { //reverse recursive requested
                             printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev); //recursion first
                             printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid); //list directory
-                        }
-                        else{
+                        } else {
                             printLISTDIR(ent->d_name, isLong, isLink, isAcc, isHid); //list directory
                             printREC(ent->d_name, isLong, isLink, isAcc, isHid, isRec, isRev); //then recursion
 
