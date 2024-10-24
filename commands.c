@@ -504,7 +504,7 @@ void Cmd_listfile (char *pcs[]){
     for (int i = dirStart; pcs[i] != NULL; i++) { //iterates through different files given
     	struct stat stats; //auxiliary to hold file info
     	if ( lstat(pcs[i], &stats) == 0) { //get file info and store it in stats
-            printFile(pcs[i], flags.isLink, flags.isLong, flags.isAcc, flags.isHid); //print file info
+            printFile(pcs[i], flags.isLong, flags.isLink, flags.isAcc, flags.isHid); //print file info
    		}else { //if lstat fails
             printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno)); //error message
    		}
