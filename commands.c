@@ -88,7 +88,7 @@ void Cmd_historic(char *pcs[]) {
         return;
     }
     if (n>0) { //that means the command is historic N
-        char *line; //helps finding the command
+        char *line; //helps to find the command
         line = hGetItem(n, hisList); //gets the item in position n
         if(line==NULL){ //if it is not found
             printf("There is no command at this position\n");
@@ -142,7 +142,7 @@ void Cmd_open (char *pcs[]){
 void Cmd_close(char *pcs[]){
     int df; //file descriptor
     if (pcs[0]==NULL || (df=atoi(pcs[0]))<0) { //if nothing requested or df is invalid
-        printf("Argument invalid or inexistent\n"); //error message
+        printf("Argument invalid or nonexistent\n"); //error message
         return;
     }
     if (close(df)==-1) { //tries to close descriptor
@@ -165,13 +165,12 @@ void Cmd_close(char *pcs[]){
 }
 
 
-void Cmd_dup (char * tr[])
-{
+void Cmd_dup (char * pcs[]){
     int df; //file descriptor
     char aux[MAX],*p; //aux as a buffer and p is a pointer to file name
     fPosL pos; //position auxiliar
     fItemL item1; //auxiliar to find the right file
-    if (tr[0]==NULL || (df=atoi(tr[0]))<0) { //there is no parameter or the descriptor is invalid
+    if (pcs[0]==NULL || (df=atoi(pcs[0]))<0) { //there is no parameter or the descriptor is invalid
         printf("Argument must be a valid file descriptor\n");
         return;
     }
@@ -210,6 +209,10 @@ void Cmd_infosys (char *pcs[]) {
 }
 
 void Cmd_quit (char *pcs[]){
+    if(pcs[0]!=NULL){ //checks for right command
+        printf("Argument not valid\n"); //that means that something else was written
+        return;
+    }
     if ( !fIsEmptyList(ofList)) { //if the list of files is not empty
         fClearList(&ofList); //clear the list before exiting
     }
@@ -223,7 +226,7 @@ void Cmd_quit (char *pcs[]){
 
 //Practice 1 commands
 
-char LetraTF(mode_t m) {
+char LetterTF(mode_t m) {
     switch (m & S_IFMT) {
         case S_IFSOCK: return 's'; //checks if it is a socket
         case S_IFLNK: return 'l'; //if symbolic link
@@ -236,22 +239,22 @@ char LetraTF(mode_t m) {
     }
 }
 
-char *ConvierteModo(mode_t m, char *permisos) {
-    strcpy(permisos, "---------- "); //sets format to substitute each position by permission
-    permisos[0] = LetraTF(m);
-    if (m & S_IRUSR) permisos[1] = 'r'; //user read, write and execute
-    if (m & S_IWUSR) permisos[2] = 'w';
-    if (m & S_IXUSR) permisos[3] = 'x';
-    if (m & S_IRGRP) permisos[4] = 'r'; //group read write and execute
-    if (m & S_IWGRP) permisos[5] = 'w';
-    if (m & S_IXGRP) permisos[6] = 'x';
-    if (m & S_IROTH) permisos[7] = 'r'; //others read write and execute
-    if (m & S_IWOTH) permisos[8] = 'w';
-    if (m & S_IXOTH) permisos[9] = 'x';
-    if (m & S_ISUID) permisos[3] = 's'; //set-user-ID-bit
-    if (m & S_ISGID) permisos[6] = 's'; //set-group-ID-bit
-    if (m & S_ISVTX) permisos[9] = 't'; //sticky-bit
-    return permisos;
+char *ModeConverter(mode_t m, char *permission) {
+    strcpy(permission, "---------- "); //sets format to substitute each position by permission
+    permission[0] = LetterTF(m);
+    if (m & S_IRUSR) permission[1] = 'r'; //user read, write and execute
+    if (m & S_IWUSR) permission[2] = 'w';
+    if (m & S_IXUSR) permission[3] = 'x';
+    if (m & S_IRGRP) permission[4] = 'r'; //group read write and execute
+    if (m & S_IWGRP) permission[5] = 'w';
+    if (m & S_IXGRP) permission[6] = 'x';
+    if (m & S_IROTH) permission[7] = 'r'; //others read write and execute
+    if (m & S_IWOTH) permission[8] = 'w';
+    if (m & S_IXOTH) permission[9] = 'x';
+    if (m & S_ISUID) permission[3] = 's'; //set-user-ID-bit
+    if (m & S_ISGID) permission[6] = 's'; //set-group-ID-bit
+    if (m & S_ISVTX) permission[9] = 't'; //sticky-bit
+    return permission;
 }
 
 int print_size(struct stat buffer){
@@ -298,7 +301,7 @@ char *print_group(struct stat buffer) { //same as print_owner but with group
 
 void print_link(struct stat buffer, char *fName){
     char toLink[MAX] = "";
-    if (LetraTF(buffer.st_mode) == 'l') { //checks if the file is a symbolic link
+    if (LetterTF(buffer.st_mode) == 'l') { //checks if the file is a symbolic link
         ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1); //readlink reads the target of the link
         if (len != -1) {
             toLink[len] = '\0';  // null-terminate the string
@@ -342,7 +345,7 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                     fprintf(stderr, "Memory allocation failed\n"); //print error message
                     return;  // Handle allocation failure
                 }
-                ConvierteModo(buffer.st_mode, perm); //converts mode to permissions
+                ModeConverter(buffer.st_mode, perm); //converts mode to permissions
                 printf(" %2d (%8d) %8s %8s %14s %6d %s",
                        print_hardlinks(buffer), print_inoden(buffer),
                        print_owner(buffer), print_group(buffer),
@@ -512,8 +515,6 @@ void Cmd_listfile (char *pcs[]){
 }
 
 void Cmd_listdir(char *pcs[]) {
-
-
     if (pcs[0]==NULL){ //if no name provided
         printf("The name of the directory must be specified\n"); //error message
         return;
@@ -535,7 +536,6 @@ void Cmd_listdir(char *pcs[]) {
 
 void Cmd_reclist (char *pcs[]){
     int isRec=1, isRev=0;
-
 
     if (pcs[0]==NULL){ //if no name provided
         printf("The name of the directory must be specified\n"); //error message
