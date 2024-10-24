@@ -8,7 +8,6 @@
 #define MAX 2048
 
 typedef char fFileName[MAX];
-typedef char *fFileMode;
 
 typedef struct fNode* fPosL;
 

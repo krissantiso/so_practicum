@@ -144,6 +144,7 @@ void hClearList (hList *L){
     else {
         while (p != NULL) {
             next = p->next; //saves the next node
+            free(p->command);
             free(p); //deletes the current one
             p=next; //advances
         }
