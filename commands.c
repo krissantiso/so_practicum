@@ -25,11 +25,11 @@
 
 void Cmd_authors (char *pcs[]){
     if ( pcs[0] == NULL ) { //if nothing requested
-        printf("Kris Santiso Sampedro\tkris.santiso@udc.es\nCris\tcorreo.cris@udc.es\n"); //print everything
+        printf("Kris Santiso Sampedro\tkris.santiso@udc.es\nCristina Vazquez Varela\tc.vazquezv@udc.es\n"); //print everything
     } else if ( strcmp( pcs[0], "-l" ) == 0 ) { //-l asks for mails
-        printf("kris.santiso@udc.es\ncorreo.cris@udc.es\n"); //print mails
+        printf("kris.santiso@udc.es\nc.vazquezv@udc.es\n"); //print mails
     } else if ( strcmp( pcs[0], "-n" ) == 0) { //-n asks for names
-        printf("Kris Santiso Sampedro\nCris\n"); //print names
+        printf("Kris Santiso Sampedro\nCristina Vazquez Varela\n"); //print names
     } else {
         printf("Invalid argument\n"); //if requested something invalid
     }
@@ -496,7 +496,7 @@ void Cmd_listfile (char *pcs[]){
         else break; //i is word position
     }
 
-    for (i = i; pcs[i] != NULL; i++) { //iterates through different files
+    for (i = i; pcs[i] != NULL; i++) { //iterates through different files given
     	struct stat stats; //auxiliary to hold file info
     	if ( lstat(pcs[i], &stats) == 0) { //get file info and store it in stats
             printFile(pcs[i], isLong, isLink, isAcc, 1); //print file info
@@ -507,49 +507,47 @@ void Cmd_listfile (char *pcs[]){
 }
 
 void Cmd_listdir(char *pcs[]) {
-    int i,j;
+    int i,j; //auxiliaries to iterate
     int isLong, isAcc , isHid , isLink;
-    isLong=isAcc=isHid=isLink=0;
+    isLong=isAcc=isHid=isLink=0; //flags initialized to 0
 
-    if (pcs[0]==NULL){
-        Cmd_cwd(pcs);
+    if (pcs[0]==NULL){ //if nothing requested
+        Cmd_cwd(pcs); //just prints cwd
         return;
     }
 
-    for(j = 0; pcs[j] != NULL; j++){
+    for(j = 0; pcs[j] != NULL; j++){ //checks for options through the command
         if (strcmp(pcs[j], "-hid") == 0) isHid = 1;
         else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
-        else break; //i is the name location
+        else break; //i is the word position
     }
 
-        for (i = j; pcs[i] != NULL; i++) {
-            struct stat buffer;
-            if( lstat(pcs[i], &buffer)==0){
+        for (i = j; pcs[i] != NULL; i++) { //iterates through different directories given
+            struct stat buffer; //initialize stat to hold info
+            if( lstat(pcs[i], &buffer)==0){ //get info of directory or file
                 if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
-                    printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid);
+                    printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid); //list contents of directory
                 }else
-                    printFile(pcs[i], isLink, isLong, isAcc, isHid);
-            }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
-
+                    printFile(pcs[i], isLink, isLong, isAcc, isHid); //prints file info
+            }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno)); //error message
         }
-
 }
 
 
 void Cmd_reclist (char *pcs[]){
-    int i,j;
+    int i,j; //auxiliaries to iterate
     int isLong, isAcc , isHid , isLink, isRec, isRev;
-    isRec=1;
-    isLong=isAcc=isHid=isLink=isRev=0;
+    isRec=1; //to know that we want recursion with dirs first and then subdirs
+    isLong=isAcc=isHid=isLink=isRev=0; //flags initialized to 0
 
-    if (pcs[0]==NULL){
-        Cmd_cwd(pcs);
+    if (pcs[0]==NULL){ //if nothing requested
+        Cmd_cwd(pcs); //just prints cwd
         return;
     }
 
-    for(j = 0; pcs[j] != NULL; j++){
+    for(j = 0; pcs[j] != NULL; j++){ //checks for options through the command
         if (strcmp(pcs[j], "-hid") == 0) isHid = 1;
         else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
@@ -557,52 +555,52 @@ void Cmd_reclist (char *pcs[]){
         else break; //i: position of arguments
     }
 
-    for (i = j; pcs[i] != NULL; i++) {
-        struct stat buffer;
-        if( lstat(pcs[i], &buffer)==0){
+    for (i = j; pcs[i] != NULL; i++) { //iterates through different directories given
+        struct stat buffer; //initialize stat to hold info
+        if( lstat(pcs[i], &buffer)==0){ //get info of directory or file
             if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
 
-                printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid);
-                printREC(pcs[i], isLong, isLink, isAcc, isHid, isRec, isRev);
+                printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid); //list contents of directory
+                printREC(pcs[i], isLong, isLink, isAcc, isHid, isRec, isRev); //then make recursion of subdirs inside
             }else
-                printFile(pcs[i], isLink, isLong, isAcc, isHid);
-        }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+                printFile(pcs[i], isLink, isLong, isAcc, isHid); //prints file info
+        }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno)); //error message
     }
 }
 void Cmd_revlist (char *pcs[]){
-    int i,j;
+    int i,j; //auxiliaries to iterate
     int isLong, isAcc , isHid , isLink, isRec, isRev;
-    isRev=1;
-    isLong=isAcc=isHid=isLink=isRec=0;
+    isRev=1; //to know that we want recursion with subdirs first and then dirs
+    isLong=isAcc=isHid=isLink=isRec=0; //flags initialized to 0
 
-    if (pcs[0]==NULL){
-        Cmd_cwd(pcs);
+    if (pcs[0]==NULL){ //if nothing requested
+        Cmd_cwd(pcs); //just prints cwd
         return;
     }
 
-    for(j = 0; pcs[j] != NULL; j++){
+    for(j = 0; pcs[j] != NULL; j++){ //checks for options through the command
         if (strcmp(pcs[j], "-hid") == 0) isHid = 1;
         else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
-        else break; //i is the name location
+        else break; //i: position of arguments
     }
 
-    for (i = j; pcs[i] != NULL; i++) {
-        struct stat buffer;
-        if( lstat(pcs[i], &buffer)==0){
+    for (i = j; pcs[i] != NULL; i++) { //iterates through different directories given
+        struct stat buffer; //initialize stat to hold info
+        if( lstat(pcs[i], &buffer)==0){ //get info of directory or file
             if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
-                printREC(pcs[i], isLong, isLink, isAcc, isHid, isRec, isRev);
-                printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid);
+                printREC(pcs[i], isLong, isLink, isAcc, isHid, isRec, isRev); //first make recursion of subdirs inside
+                printLISTDIR(pcs[i], isLong, isLink, isAcc, isHid); //list contents of directory
             }else
-                printFile(pcs[i], isLink, isLong, isAcc, isHid);
-        }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+                printFile(pcs[i], isLink, isLong, isAcc, isHid); //prints file info
+        }else printf("Cannot get stats of %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno)); //error messsage
     }
 }
 
 void Cmd_erase (char *pcs[]){
-    if (pcs[0]==NULL){
-        printf("The name of the file or directory must be especified");
+    if (pcs[0]==NULL){ //if no name provided
+        printf("The name of the file or directory must be especified\n"); //error message
         return;
     }
     for ( int i = 0; pcs[i] != NULL; i++) {
@@ -638,8 +636,8 @@ void auxDel (char *path) {
 }
 
 void Cmd_delrec (char *pcs[]){
-    if (pcs[0]==NULL){
-        printf("The name of the directory must be especified\n");
+    if (pcs[0]==NULL){ //if no name provided
+        printf("The name of the directory must be especified\n"); //error message
         return;
     }
     char cwd[MAX];

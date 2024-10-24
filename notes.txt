@@ -5,6 +5,8 @@ delrec ../.. - makes everything not work until u go back enough with cd ../..
 Solved weirdly:
 date doesnt work xd - added 1 to all month calls so it works (ask if it starts at 0)
 
+WHAT'S LEFT:
+comment erase and delrec with auxiliary
 
 DOUBTS:
-ask teacher if in listfile we print an error for no name provided or print cwd
+ask teacher if in listfile, erase and delrec we print an error for no name provided or print cwd
