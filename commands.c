@@ -549,7 +549,6 @@ void Cmd_reclist (char *pcs[]){
         struct stat buffer; //initialize stat to hold info
         if( lstat(pcs[i], &buffer)==0){ //get info of directory or file
             if(S_ISDIR(buffer.st_mode)) { //check if it is a directory
-
                 printLISTDIR(pcs[i], flags.isLong, flags.isLink, flags.isAcc, flags.isHid); //list contents of directory
                 printREC(pcs[i], flags.isLong, flags.isLink, flags.isAcc, flags.isHid, isRec, isRev); //then make recursion of subdirs inside
             }else

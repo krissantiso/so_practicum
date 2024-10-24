@@ -8,11 +8,11 @@ main: p1.c historicList.c historicList.h fileList.c fileList.h help.c help.h com
 	$(CC) $(FLAGS) fileList.c -o flist.o -c
 	$(CC) $(FLAGS) help.c -o help.o -c
 	$(CC) $(FLAGS) p1.c -o p1.o -c
-	$(CC) p1.o hlist.o flist.o help.o commands.o -o shell
+	$(CC) p1.o hlist.o flist.o help.o commands.o -o p1
 	rm -r *.o
 clean:
 	rm -r *.o
 exec:
-	./shell
+	./p1
 valgrind:
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./shell
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./p1
