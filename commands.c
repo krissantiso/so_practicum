@@ -359,7 +359,7 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
 
 void printLISTDIR(char *dirName, int isLong, int isLink, int isAcc, int isHid){
     char dir[MAX];
-    getcwd(dir, MAX); //get cwd and store it in dir
+    getcwd(dir, MAX); //get cwd and store it in dir. MAX is passed so the path doesn't exceed the buffer size
     struct stat buffer;
     struct stat buffer2;
     DIR * dirc;
@@ -432,7 +432,7 @@ void Cmd_cwd (char *pcs[]){
     char dir[MAX]; //char array to store path of current directory
     if (pcs[0]==NULL){
         if (getcwd(dir,MAX)!=NULL) { //gets cwd
-            printf("%s\n", getcwd(dir, MAX)); //if succeeds, print dir path
+            printf("%s\n", dir); //if succeeds, print dir path
         }else {
             perror("Error getting current working directory"); //print error message if getcwd fails
         }
@@ -487,7 +487,7 @@ void Cmd_listfile (char *pcs[]){
     	if (strcmp(pcs[i], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[i], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[i], "-acc") == 0) isAcc = 1;
-        else break; //i is word position
+        else break; //i: argument position
     }
 
     for (i = i; pcs[i] != NULL; i++) { //iterates through different files given
@@ -506,7 +506,7 @@ void Cmd_listdir(char *pcs[]) {
     isLong=isAcc=isHid=isLink=0; //flags initialized to 0
 
     if (pcs[0]==NULL){ //if no name provided
-        printf("The name of the directory must be especified\n"); //error message
+        printf("The name of the directory must be specified\n"); //error message
         return;
     }
 
@@ -515,7 +515,7 @@ void Cmd_listdir(char *pcs[]) {
         else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
-        else break; //i is the word position
+        else break; //i: argument position
     }
 
         for (i = j; pcs[i] != NULL; i++) { //iterates through different directories given
@@ -537,7 +537,7 @@ void Cmd_reclist (char *pcs[]){
     isLong=isAcc=isHid=isLink=isRev=0; //flags initialized to 0
 
     if (pcs[0]==NULL){ //if no name provided
-        printf("The name of the directory must be especified\n"); //error message
+        printf("The name of the directory must be specified\n"); //error message
         return;
     }
 
@@ -546,7 +546,7 @@ void Cmd_reclist (char *pcs[]){
         else if (strcmp(pcs[j], "-long") == 0) isLong = 1;
         else if (strcmp(pcs[j], "-link") == 0) isLink = 1;
         else if (strcmp(pcs[j], "-acc") == 0) isAcc = 1;
-        else break; //i: position of arguments
+        else break; //i: argument position
     }
 
     for (i = j; pcs[i] != NULL; i++) { //iterates through different directories given
@@ -568,7 +568,7 @@ void Cmd_revlist (char *pcs[]){
     isLong=isAcc=isHid=isLink=isRec=0; //flags initialized to 0
 
     if (pcs[0]==NULL){ //if no name provided
-        printf("The name of the directory must be especified\n"); //error message
+        printf("The name of the directory must be specified\n"); //error message
         return;
     }
 
@@ -594,38 +594,42 @@ void Cmd_revlist (char *pcs[]){
 
 void Cmd_erase (char *pcs[]){
     if (pcs[0]==NULL){ //if no name provided
-        printf("The name of the file or directory must be especified\n"); //error message
+        printf("The name of the file or directory must be specified\n"); //error message
         return;
     }
-    for ( int i = 0; pcs[i] != NULL; i++) {
-        if (remove(pcs[i]) != 0 ) {
+    for ( int i = 0; pcs[i] != NULL; i++) { //this loop goes through all provided files/dirs names
+        if (remove(pcs[i]) != 0 ) { //called to delete the file/dir
             printf("Cannot delete %s. Error number is %d (%s)\n", pcs[i], errno, strerror(errno));
+            //if fails (returns non-zero value) -> print error message
         } else {
-            printf("%s removed\n", pcs[i]);
+            printf("%s removed\n", pcs[i]); //success message
         }
     }
 }
 
 void auxDel (char *path) {
     struct dirent *de;
-    DIR *dr = opendir(path);
-    if( dr == NULL) {
-        printf("No file or directory found (%s)\n", path);
+    DIR *dr = opendir(path); //attempts to open the directory at path
+    // if it succeeds, it returns a pointer to the directory stream (DIR *dr)
+    if( dr == NULL) { //if opendir fails
+        printf("No file or directory found (%s)\n", path); //error message
         return;
     }
-    while((de = readdir(dr)) != NULL) {
+    while((de = readdir(dr)) != NULL) { //this loop goes through each entry in directory to read contents
         char newDir[MAX];
         sprintf(newDir,"%s/%s",path,de->d_name);
-        if ( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 ) {
+        //for each file or subdir, it concatenates the current path and the dir entry name (de->d_name) into newDir
+        if ( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 ) { //ensure cwd and parent dir are ignored
             continue;
         }
-        if ( remove(newDir) != 0 ) {
-            auxDel(newDir);
+        if ( remove(newDir) != 0 ) { //try to delete current dir entry (newDir)
+            //if remove fails: entry is likely a subdirectory
+            auxDel(newDir); //recursion to delete contents of the subdir
         }
     }
-    closedir(dr);
-    if ( remove(path) != 0 ) {
-        printf("Cannot delete %s: Error number is %d (%s)\n", path, errno, strerror(errno));
+    closedir(dr); //after all entries have been processed -> dir is closed
+    if ( remove(path) != 0 ) { //remove directory itself
+        printf("Cannot delete %s: Error number is %d (%s)\n", path, errno, strerror(errno)); //if fails -> error message
     }
 }
 
@@ -635,19 +639,20 @@ void Cmd_delrec (char *pcs[]){
         return;
     }
     char cwd[MAX];
-    strcpy(cwd, getcwd(cwd, MAX));
-    for ( int i = 0; pcs[i] != NULL; i++) {
-        if ( remove(pcs[i]) == 0 ) {
-            printf("%s deleted\n", pcs[i]);
+    getcwd(cwd, MAX); //stores current working directory in cwd
+    for ( int i = 0; pcs[i] != NULL; i++) { //goes through all the dir names provided
+        if ( remove(pcs[i]) == 0 ) { //attempts to delete the dir directly
+            printf("%s deleted\n", pcs[i]); //if succeeded -> success message
             continue;
         }
-        if ( chdir(pcs[i]) != 0 ) {
-            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno));
+        if ( chdir(pcs[i]) != 0 ) { //if fails -> tries to change to the provided dir
+            printf("Cannot do. Error number is %d (%s)\n", errno, strerror(errno)); //error message
             continue;
         }
+        //change dir successfully
         char dir[MAX];
-        strcpy(dir, getcwd(dir, MAX));
-        auxDel(dir);
-        chdir(cwd);
+        getcwd(dir, MAX); //gets the path of the directory to be removed and stores it in dir
+        auxDel(dir); //initialize recursive deletion
+        chdir(cwd); //changes the dir back to cwd: it ensures that the program returns to its  original dir
     }
 }
