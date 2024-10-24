@@ -296,9 +296,26 @@ char *print_group(struct stat buffer) { //same as print_owner but with group
     return (gr == NULL) ? "???????" : gr->gr_name;
 }
 
+void print_link(struct stat buffer, char *fName){
+    char toLink[MAX] = "";
+    if (LetraTF(buffer.st_mode) == 'l') { //checks if the file is a symbolic link
+        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1); //readlink reads the target of the link
+        if (len != -1) {
+            toLink[len] = '\0';  // null-terminate the string
+            if (S_ISLNK(buffer.st_mode)) { //check again if the file is a symbolic link
+                printf(" -> %s", toLink); //print link target
+            } else {
+                printf("\n"); //if it is not a symb.link just prints new line
+            }
+        } else {
+            printf("Error reading link for %s: %s", fName, strerror(errno)); //if readlink fails
+        }
+    }
+}
+
 void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
     if (!(!isHid && fName[0] == '.')) { //skip hidden files if isHid=0 and if the current file starts with '.'
-        char toLink[MAX] = "", *perm;
+        char *perm;
         struct stat buffer;
 
         if (lstat(fName, &buffer) != 0) { //get file information
@@ -311,19 +328,7 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                 }
                 printf("%s", fName); //also print file name
                 if (isLink) { //if link requested
-                    if (LetraTF(buffer.st_mode) == 'l') { //checks if the file is a symbolic link
-                        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1); //readlink reads the target of the link
-                        if (len != -1) {
-                            toLink[len] = '\0';  // null-terminate the string
-                            if (S_ISLNK(buffer.st_mode)) { //check again if the file is a symbolic link
-                                printf(" -> %s", toLink); //print link target
-                            } else {
-                                printf("\n"); //if it is not a symb.link just prints new line
-                            }
-                        } else {
-                            printf("Error reading link for %s: %s", fName, strerror(errno)); //if readlink fails
-                        }
-                    }
+                    print_link(buffer, fName);
                 }
                 printf("\n");
             } else { //if long requested
@@ -344,23 +349,9 @@ void printFile(char *fName, int isLong, int isLink, int isAcc, int isHid) {
                        perm, print_size(buffer), fName); //print all info
                 free(perm); //free memory allocated for permissions
                 if (isLink) { //if link is requested
-                    if (LetraTF(buffer.st_mode) == 'l') { //same as before
-                        ssize_t len = readlink(fName, toLink, sizeof(toLink) - 1);
-                        if (len != -1) {
-                            toLink[len] = '\0';  // Null-terminate the string
-                            if (S_ISLNK(buffer.st_mode)) {
-                                printf(" -> %s\n", toLink);
-                            } else {
-                                printf("\n");
-                            }
-                        } else {
-                            printf("Error reading link for %s: %s\n", fName, strerror(errno));
-                        }
-                    } else printf("\n");
-
-                } else {
-                    printf("\n");
+                   print_link(buffer, fName);
                 }
+                printf("\n");
             }
         }
     }
