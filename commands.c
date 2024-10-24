@@ -505,8 +505,8 @@ void Cmd_listdir(char *pcs[]) {
     int isLong, isAcc , isHid , isLink;
     isLong=isAcc=isHid=isLink=0; //flags initialized to 0
 
-    if (pcs[0]==NULL){ //if nothing requested
-        Cmd_cwd(pcs); //just prints cwd
+    if (pcs[0]==NULL){ //if no name provided
+        printf("The name of the directory must be especified\n"); //error message
         return;
     }
 
@@ -536,8 +536,8 @@ void Cmd_reclist (char *pcs[]){
     isRec=1; //to know that we want recursion with dirs first and then subdirs
     isLong=isAcc=isHid=isLink=isRev=0; //flags initialized to 0
 
-    if (pcs[0]==NULL){ //if nothing requested
-        Cmd_cwd(pcs); //just prints cwd
+    if (pcs[0]==NULL){ //if no name provided
+        printf("The name of the directory must be especified\n"); //error message
         return;
     }
 
@@ -567,8 +567,8 @@ void Cmd_revlist (char *pcs[]){
     isRev=1; //to know that we want recursion with subdirs first and then dirs
     isLong=isAcc=isHid=isLink=isRec=0; //flags initialized to 0
 
-    if (pcs[0]==NULL){ //if nothing requested
-        Cmd_cwd(pcs); //just prints cwd
+    if (pcs[0]==NULL){ //if no name provided
+        printf("The name of the directory must be especified\n"); //error message
         return;
     }
 
