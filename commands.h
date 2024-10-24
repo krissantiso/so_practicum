@@ -9,6 +9,13 @@
 extern hList hisList;
 extern fList ofList;
 
+struct Flags {
+    int isLong;
+    int isAcc;
+    int isHid;
+    int isLink;
+};
+
 void Cmd_authors (char *pcs[]);
 void Cmd_pid ();
 void Cmd_ppid ();
