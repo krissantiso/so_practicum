@@ -1,6 +1,6 @@
-//
-// Created by kris on 10/20/24.
-//
+// Authors:
+// Kris Santiso Sampedro    kris.santiso@udc.es
+// Cristina Vazquez Varela  c.vazquezv@udc.es
 
 #include "commands.h"
 #include "historicList.h"

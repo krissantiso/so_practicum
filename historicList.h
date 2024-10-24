@@ -1,3 +1,7 @@
+// Authors:
+// Kris Santiso Sampedro    kris.santiso@udc.es
+// Cristina Vazquez Varela  c.vazquezv@udc.es
+
 #ifndef HISTORICLIST_H
 #define HISTORICLIST_H
 
